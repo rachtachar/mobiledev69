@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}OpenID Connect Provider Dashboard{% endblock %}
+
+{% block content %}
+<div class="header">
+    <div class="logo-icon">ID</div>
+    <h1>OpenID Connect Provider</h1>
+    <p class="subtitle">Django + django-oidc-provider is active and running</p>
+</div>
+
+<div class="meta-box">
+    <div class="meta-row">
+        <span class="meta-label">Status</span>
+        <span class="meta-value" style="color: #4ade80;">Active</span>
+    </div>
+    <div class="meta-row">
+        <span class="meta-label">User Status</span>
+        <span class="meta-value">
+            {% if user.is_authenticated %}
+                Logged in as <strong>{{ user.username }}</strong>
+            {% else %}
+                Anonymous (<a href="{% url 'login' %}">Log In</a>)
+            {% endif %}
+        </span>
+    </div>
+    <div class="meta-row">
+        <span class="meta-label">Discovery Endpoint</span>
+        <span class="meta-value"><a href="{{ discovery_url }}" target="_blank">.well-known/openid-configuration</a></span>
+    </div>
+    <div class="meta-row">
+        <span class="meta-label">JWKS Keys</span>
+        <span class="meta-value"><a href="{{ jwks_url }}" target="_blank">openid/jwks/</a></span>
+    </div>
+    <div class="meta-row">
+        <span class="meta-label">Authorize Endpoint</span>
+        <span class="meta-value">/openid/authorize/</span>
+    </div>
+    <div class="meta-row">
+        <span class="meta-label">Token Endpoint</span>
+        <span class="meta-value">/openid/token/</span>
+    </div>
+    <div class="meta-row">
+        <span class="meta-label">Userinfo Endpoint</span>
+        <span class="meta-value">/openid/userinfo/</span>
+    </div>
+</div>
+
+<div class="actions" style="margin-top: 24px;">
+    {% if user.is_authenticated %}
+        <form method="post" action="{% url 'logout' %}" style="width: 100%;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary">Sign Out</button>
+        </form>
+        <a href="/admin/" class="btn btn-primary">Admin Console</a>
+    {% else %}
+        <a href="{% url 'login' %}" class="btn btn-primary">Sign In</a>
+        <a href="/admin/" class="btn btn-secondary">Admin Console</a>
+    {% endif %}
+</div>
+{% endblock %}

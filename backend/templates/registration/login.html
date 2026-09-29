@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - OpenID Connect Provider{% endblock %}
+
+{% block content %}
+<div class="header">
+    <div class="logo-icon">🔑</div>
+    <h1>Sign In</h1>
+    <p class="subtitle">Authenticate with your account credentials</p>
+</div>
+
+{% if form.errors %}
+<div class="alert alert-danger">
+    Your username and password didn't match. Please try again.
+</div>
+{% endif %}
+
+<form method="post" action="{% url 'login' %}">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+
+    <div class="form-group">
+        <label for="id_username">Username</label>
+        <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required id="id_username" placeholder="Enter username">
+    </div>
+
+    <div class="form-group">
+        <label for="id_password">Password</label>
+        <input type="password" name="password" autocomplete="current-password" required id="id_password" placeholder="Enter password">
+    </div>
+
+    <div class="actions">
+        <button type="submit" class="btn btn-primary">Sign In</button>
+    </div>
+</form>
+
+<div style="text-align: center; margin-top: 20px; font-size: 0.85rem;">
+    <a href="{% url 'index' %}" style="color: var(--text-muted);">← Back to overview</a>
+</div>
+{% endblock %}

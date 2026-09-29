@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Authorization Error - OpenID Connect Provider{% endblock %}
+
+{% block content %}
+<div class="header">
+    <div class="logo-icon" style="background: linear-gradient(135deg, #ef4444, #f97316);">⚠️</div>
+    <h1 style="color: #f87171;">Authorization Error</h1>
+    <p class="subtitle">{{ error }}</p>
+</div>
+
+<div class="alert alert-danger" style="margin-bottom: 24px;">
+    <strong>Details:</strong> {{ description|default:"An error occurred during authentication/authorization." }}
+</div>
+
+<div class="actions">
+    <a href="{% url 'index' %}" class="btn btn-secondary">Return Home</a>
+</div>
+{% endblock %}
