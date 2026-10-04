@@ -3,57 +3,8 @@ import 'package:provider/provider.dart';
 import '../../viewmodels/auth_view_model.dart';
 import '../theme/app_theme.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
-
-  @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _usernameFocusNode = FocusNode();
-  final _passwordFocusNode = FocusNode();
-
-  bool _obscurePassword = true;
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
-    _usernameFocusNode.dispose();
-    _passwordFocusNode.dispose();
-    super.dispose();
-  }
-
-  void _submit() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    final authVm = context.read<AuthViewModel>();
-    final success = await authVm.login(
-      _usernameController.text.trim(),
-      _passwordController.text,
-    );
-
-    if (!mounted) return;
-
-    if (!success && authVm.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authVm.errorMessage!),
-          backgroundColor: AppTheme.accentRed,
-        ),
-      );
-    }
-  }
-
-  void _fillUsername(String username) {
-    _usernameController.text = username;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,23 +16,25 @@ class _LoginScreenState extends State<LoginScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+              constraints: const BoxConstraints(maxWidth: 440),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // App Branding
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.account_balance_wallet,
-                      size: 38,
-                      color: AppTheme.primaryColor,
+                  Center(
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.account_balance_wallet,
+                        size: 42,
+                        color: AppTheme.primaryColor,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -89,208 +42,253 @@ class _LoginScreenState extends State<LoginScreen> {
                     'SplitSquad',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
                       color: AppTheme.textDark,
                       letterSpacing: -0.5,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   const Text(
-                    'ระบบหารค่าใช้จ่ายกลุ่มและจัดการหนี้อัจฉริยะ\nเชื่อมต่อมาตรฐาน OpenID Connect',
+                    'ระบบหารค่าใช้จ่ายกลุ่มและจัดการหนี้อัจฉริยะ\nเชื่อมต่อมาตรฐาน OpenID Connect (PKCE)',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 14,
                       color: AppTheme.textMuted,
                       height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 32),
 
-                  // Form Container
+                  // Main Sign-In Card (Pure OIDC Authorization Code Flow)
                   Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const Text(
-                              'เข้าสู่ระบบ (Sign In)',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.textDark,
-                              ),
+                      padding: const EdgeInsets.all(28),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text(
+                            'เข้าสู่ระบบ (Sign In)',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textDark,
                             ),
-                            const SizedBox(height: 16),
-
-                            // OpenID Connect Web Flow (PKCE)
-                            ElevatedButton.icon(
-                              onPressed: authVm.isLoading ? null : () => authVm.startOidcWebLogin(),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF4F46E5), // Indigo
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                              ),
-                              icon: const Icon(Icons.security, size: 20),
-                              label: const Text(
-                                'เข้าสู่ระบบด้วย Django OIDC (PKCE)',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                              ),
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'ยืนยันตัวตนด้วยมาตรฐานความปลอดภัยระดับสากล ผ่าน OIDC Identity Provider (Authorization Code Flow with PKCE)',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.textMuted,
+                              height: 1.4,
                             ),
-                            const SizedBox(height: 16),
+                          ),
+                          const SizedBox(height: 20),
 
-                            Row(
-                              children: const [
-                                Expanded(child: Divider()),
-                                Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 8),
-                                  child: Text(
-                                    'หรือกรอกรหัสผ่าน / บัญชีด่วน',
-                                    style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                                  ),
-                                ),
-                                Expanded(child: Divider()),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
+                          // Security Protocol Badges
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _buildBadge(Icons.security, 'OAuth 2.0 / OIDC'),
+                              _buildBadge(Icons.lock_clock, 'PKCE S256'),
+                              _buildBadge(Icons.vpn_key, 'RS256 JWT'),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
 
-                            // Username Field
-                            TextFormField(
-                              controller: _usernameController,
-                              focusNode: _usernameFocusNode,
-                              textInputAction: TextInputAction.next,
-                              onFieldSubmitted: (_) {
-                                FocusScope.of(context).requestFocus(_passwordFocusNode);
-                              },
-                              decoration: const InputDecoration(
-                                labelText: 'ชื่อผู้ใช้ (Username)',
-                                prefixIcon: Icon(Icons.person_outline),
+                          // Error Message if any
+                          if (authVm.errorMessage != null) ...[
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppTheme.accentRed.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppTheme.accentRed.withValues(alpha: 0.3)),
                               ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'กรุณากรอกชื่อผู้ใช้';
-                                }
-                                if (value.trim().length < 3) {
-                                  return 'ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Password Field
-                            TextFormField(
-                              controller: _passwordController,
-                              focusNode: _passwordFocusNode,
-                              obscureText: _obscurePassword,
-                              textInputAction: TextInputAction.done,
-                              onFieldSubmitted: (_) => _submit(),
-                              decoration: InputDecoration(
-                                labelText: 'รหัสผ่าน (Password)',
-                                prefixIcon: const Icon(Icons.lock_outline),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
-                                ),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'กรุณากรอกรหัสผ่าน';
-                                }
-                                if (value.length < 4) {
-                                  return 'รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Submit Button
-                            ElevatedButton(
-                              onPressed: authVm.isLoading ? null : _submit,
-                              child: authVm.isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.error_outline, color: AppTheme.accentRed, size: 20),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      authVm.errorMessage!,
+                                      style: const TextStyle(
+                                        color: AppTheme.accentRed,
+                                        fontSize: 13,
                                       ),
-                                    )
-                                  : const Text('เข้าสู่ระบบ'),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
+                            const SizedBox(height: 20),
                           ],
-                        ),
+
+                          // Primary OIDC Login Action Button
+                          ElevatedButton.icon(
+                            onPressed: authVm.isLoading ? null : () => authVm.startOidcWebLogin(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4F46E5), // Indigo
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 2,
+                            ),
+                            icon: authVm.isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.shield_outlined, size: 22),
+                            label: Text(
+                              authVm.isLoading
+                                  ? 'กำลังเชื่อมต่อ OIDC Server...'
+                                  : 'เข้าสู่ระบบด้วย OpenID Connect',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            '🛡️ แอปจะไม่ร้องขอหรือเก็บรหัสผ่านในเครื่อง โดยระบบจะนำท่านไปยังหน้ายืนยันตัวตนของ OIDC Server โดยตรง',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.textMuted,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
 
                   const SizedBox(height: 24),
 
-                  // Dev usernames hint
-                  const Text(
-                    '⚡ รายชื่อบัญชีทดสอบในระบบ (ไม่ Hard-code รหัสผ่าน):',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textMuted,
+                  // Examiner & Testing Information Card
+                  Card(
+                    color: Colors.grey.shade50,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.info_outline, size: 18, color: AppTheme.primaryColor),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'ข้อมูลสำหรับการตรวจประเมิน (Demo Accounts):',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.textDark,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'ท่านสามารถใช้บัญชีผู้ใช้ทดสอบด้านล่าง เพื่อล็อกอินที่หน้า OIDC Server:',
+                            style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: const [
+                              _AccountChip(name: 'alice', desc: 'Alice Chen (แนะนำ)'),
+                              _AccountChip(name: 'bob', desc: 'Bob Smith'),
+                              _AccountChip(name: 'somchai', desc: 'Somchai'),
+                              _AccountChip(name: 'admin', desc: 'System Admin'),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            '* รหัสผ่านเริ่มต้นคือ <username>123 เช่น alice123 (ระบุไว้ในเอกสาร README.md)',
+                            style: TextStyle(fontSize: 11, color: AppTheme.textMuted, fontStyle: FontStyle.italic),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      ActionChip(
-                        label: const Text('alice'),
-                        avatar: const CircleAvatar(
-                          backgroundColor: Colors.pinkAccent,
-                          child: Text('A', style: TextStyle(color: Colors.white, fontSize: 11)),
-                        ),
-                        onPressed: () => _fillUsername('alice'),
-                      ),
-                      ActionChip(
-                        label: const Text('bob'),
-                        avatar: const CircleAvatar(
-                          backgroundColor: Colors.blueAccent,
-                          child: Text('B', style: TextStyle(color: Colors.white, fontSize: 11)),
-                        ),
-                        onPressed: () => _fillUsername('bob'),
-                      ),
-                      ActionChip(
-                        label: const Text('somchai'),
-                        avatar: const CircleAvatar(
-                          backgroundColor: Colors.orangeAccent,
-                          child: Text('S', style: TextStyle(color: Colors.white, fontSize: 11)),
-                        ),
-                        onPressed: () => _fillUsername('somchai'),
-                      ),
-                      ActionChip(
-                        label: const Text('admin'),
-                        avatar: const CircleAvatar(
-                          backgroundColor: Colors.teal,
-                          child: Text('M', style: TextStyle(color: Colors.white, fontSize: 11)),
-                        ),
-                        onPressed: () => _fillUsername('admin'),
-                      ),
-                    ],
                   ),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  static Widget _buildBadge(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4F46E5).withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF4F46E5).withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFF4F46E5)),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF4F46E5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AccountChip extends StatelessWidget {
+  final String name;
+  final String desc;
+
+  const _AccountChip({required this.name, required this.desc});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            name,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '($desc)',
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+          ),
+        ],
       ),
     );
   }
