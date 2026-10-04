@@ -1,169 +1,164 @@
-# SplitSquad — Group Expense & Bill Splitter
+# 💸 SplitSquad — Group Expense & Bill Splitter
 
-> **Mobile Development Course Project (Week 16)**  
-> สถาปัตยกรรมแบบ Full-Stack Mobile Application: Flutter (MVVM Architecture) + Django OpenID Connect Provider
-
----
-
-## 1. Project Name & Description (ชื่อโครงการและรายละเอียด)
-
-**SplitSquad** เป็นระบบบันทึกและหารค่าใช้จ่ายกลุ่ม (Group Expense & Bill Splitter) พร้อมระบบคำนวณยอดหนี้คงค้างสุทธิระหว่างบุคคลแบบเรียลไทม์ และระบบเคลียร์หนี้ (Debt Settlement) ช่วยให้เพื่อนร่วมกลุ่ม ทริปท่องเที่ยว หรือครอบครัวสามารถบันทึกค่าใช้จ่ายและตรวจสอบได้ทันทีว่าใครต้องจ่ายให้ใครเท่าไร
-
-ตัวระบบถูกออกแบบและพัฒนาขึ้นตามหลักสูตรวิชา Mobile Application Development (Week 11–16) โดยประยุกต์ใช้องค์ความรู้ระดับมาตรฐานวิชาชีพ:
-- **Week 11 & 15:** สถาปัตยกรรม **Google Compass MVVM** ร่วมกับ Dependency Injection (`MultiProvider`, `ProxyProvider`)
-- **Week 12 & 16:** การยืนยันตัวตนความปลอดภัยสูงตามมาตรฐาน **OpenID Connect (OIDC)** ด้วย **Authorization Code Flow + PKCE (Proof Key for Code Exchange)** ร่วมกับ Django และ Protected REST API (Bearer Token)
-- **Week 13:** Data Layer Architecture แบบ Stateless (`ApiClient` บน Dio, `Result<T>` pattern สำหรับ Safe Exception Handling, Domain Models, Repository Pattern)
-- **Week 14:** ระบบ Flutter Form Management & Input Validation (`Form`, `GlobalKey<FormState>`, `TextFormField`, RegEx validators, `FocusNode`, `TextEditingController`)
-- **Week 16:** Persistent Session Management (`SharedPreferences`), Route Guards, Zero-Error Execution, และ Extra Feature (Dark Mode 🌙)
+แอปพลิเคชันจัดการและหารค่าใช้จ่ายกลุ่มสำหรับเพื่อนร่วมทริป รูมเมท หรือเพื่อนร่วมงาน สรุปยอดหนี้สุทธิและเคลียร์เงินกันได้แบบเรียลไทม์ เชื่อมต่อความปลอดภัยระดับสากลด้วย **OpenID Connect (OIDC)**
 
 ---
 
-## 2. Team Members (ข้อมูลผู้พัฒนา)
+## ① ชื่อโปรเจกต์และคำอธิบาย (About Project)
 
-| ลำดับ | รหัสนักศึกษา | ชื่อ - นามสกุล | บทบาทหน้าที่ |
-| :---: | :---: | :---: | :--- |
-| 1 | `65xxxxxxx` | นักศึกษาผู้รับผิดชอบโครงการ | Full-Stack Development (Flutter UI, MVVM, Django Backend, OIDC) |
+### 📌 ปัญหาที่เราพบเจอ (The Problem)
+เวลาไปเที่ยวต่างจังหวัดกับแก๊งเพื่อน ไปกินชาบูกับเพื่อนที่ทำงาน หรือแชร์ค่าหอกับรูมเมท มักเจอปัญหาชวนปวดหัวเสมอ:
+- ต่างคนต่างช่วยกันจ่ายคนละบิล สับสนว่าใครจ่ายอะไรไปแล้วบ้าง
+- คำนวณหายอดสุทธิยาก ต้องมานั่งกดเครื่องคิดเลขทอนเงินไปมา
+- ความเกรงใจทำให้ลืมทวง หรือลืมว่าตัวเองยังติดเงินเพื่อนอยู่เท่าไร
 
----
-
-## 3. Features List (รายการคุณสมบัติเด่น)
-
-### 3.1 การยืนยันตัวตนตามมาตรฐานความปลอดภัย (OIDC Authentication - 20 คะแนน)
-- [x] **OIDC Authorization Code Flow with PKCE (S256):** รองรับ Web Redirect Flow เชื่อมต่อกับ Django OIDC Provider และแลกเปลี่ยน Access Token อย่างปลอดภัย
-- [x] **Persistent Session Storage:** บันทึก Token และ User Profile ลง `SharedPreferences` รีเฟรชหน้าเว็บหรือเปิดแอปใหม่ไม่ต้องล็อกอินซ้ำ
-- [x] **Route Guard & Dynamic Routing:** ป้องกันหน้าใช้งานหลักอัตโนมัติ หากยังไม่ผ่านการล็อกอินจะแสดงหน้า LoginScreen ทันที
-- [x] **Session Logout:** ปุ่มออกจากระบบ เคลียร์ Token และ User State ออกจาก Storage อย่างสมบูรณ์
-- [x] **Quick Preset Logins:** ปุ่มล็อกอินด่วน (Alice, Bob, Admin) สะดวกต่อการตรวจให้คะแนน
-
-### 3.2 การจัดการบิลค่าใช้จ่ายครบทุกมิติ (Main CRUD Functions - 15 คะแนน)
-- [x] **Create (สร้างบิล):** เพิ่มรายการค่าใช้จ่าย ระบุชื่อบิล จำนวนเงิน หมวดหมู่ หมายเหตุ และเลือกสมาชิกผู้ร่วมหารได้อิสระ
-- [x] **Read (ดูรายการบิลและสรุปยอด):** ดูประวัติค่าใช้จ่ายทั้งหมด พร้อมหน้าสรุปยอดหนี้สุทธิ (Net Balance) และรายละเอียดบิลแยกรายบุคคล
-- [x] **Update (แก้ไขบิล):** สามารถกดแก้ไขรายละเอียดบิล ยอดเงิน หรือผู้ร่วมหาร และคำนวณส่วนแบ่งใหม่ทันที
-- [x] **Delete (ลบบิล):** สามารถลบบิลที่ไม่ต้องการ พร้อมระบบยืนยันความปลอดภัย (Confirmation Dialog)
-
-### 3.3 ฟีเจอร์เสริมพิเศษ (Extra Features - 10 คะแนน)
-- [x] **โหมดกลางคืน (Dark Mode 🌙):** สลับธีมมืด/สว่างได้จาก AppBar หรือหน้า Profile พร้อมจดจำค่าไว้ใน `SharedPreferences`
-- [x] **Category Filtering:** กรองดูค่าใช้จ่ายตามหมวดหมู่ (อาหาร, เดินทาง, ที่พัก, บันเทิง, ช้อปปิ้ง, อื่นๆ)
-- [x] **Debt Settlement (การบันทึกคืนเงิน):** ระบบคำนวณการเคลียร์หนี้สุทธิระหว่างบุคคล พร้อมอัปเดตสถานะบิลอัตโนมัติ
+### 🎯 เราแก้ปัญหาอย่างไร และใครคือผู้ใช้งาน? (The Solution & Audience)
+**SplitSquad** ถูกสร้างขึ้นเพื่อกลุ่มเพื่อน นักศึกษา รูมเมท และเพื่อนร่วมงาน:
+- ช่วยให้ทุกคนสามารถบันทึกบิลที่ตัวเองเป็นคนจ่าย เลือกว่ามีใครเป็นคนร่วมหารบ้าง
+- ระบบจะคำนวณ **ยอดหนี้สุทธิ (Net Balance)** ให้ทันทีแบบเรียลไทม์ ทำให้เห็นภาพชัดเจนว่า *"สรุปแล้วฉันติดใครเท่าไร"* หรือ *"ใครต้องคืนเงินฉันบ้าง"*
+- มีปุ่มบันทึกการคืนเงิน (**Settle Debt**) เพื่อตัดยอดหนี้อัตโนมัติเมื่อเพื่อนโอนเงินคืนเรียบร้อยแล้ว
 
 ---
 
-## 4. Tech Stack (เทคโนโลยีที่ใช้)
+## ② ฟีเจอร์การใช้งาน (Features)
 
-### Frontend (Mobile & Web)
-- **Framework:** Flutter SDK 3.x (Dart 3.x)
-- **State Management & DI:** `provider` (MultiProvider, ProxyProvider, ChangeNotifierProxyProvider)
-- **Networking:** `dio` (Stateless ApiClient with Bearer Interceptor)
-- **Local Storage:** `shared_preferences` (Persistent Session & Theme Mode)
-- **Security:** `crypto` (SHA-256 PKCE Code Challenge Generation)
-- **Localization & Formatting:** `intl` (Thai Baht Currency & DateTime Format)
-- **External Integration:** `url_launcher`
+### ✨ ฟีเจอร์หลัก (Core Features)
+- [x] **OIDC Authentication (PKCE Flow):** เข้าสู่ระบบผ่าน OpenID Connect Identity Provider (`django-oidc-provider`) โดยแอปไม่ยุ่งเกี่ยวและไม่เก็บรหัสผ่านไว้ในเครื่องตามมาตรฐานความปลอดภัย
+- [x] **Persistent Session:** จำสถานะการล็อกอินไว้ในเครื่อง ปิดแอปหรือรีเฟรชหน้าเว็บก็ยังใช้งานต่อได้ทันที
+- [x] **Create Expense:** บันทึกบิลค่าใช้จ่าย ระบุชื่อ ยอดเงิน หมวดหมู่ หมายเหตุ และเลือกสมาชิกผู้ร่วมหารได้อิสระ
+- [x] **Read & Balance Overview:** แสดงรายการบิลทั้งหมด พร้อมสรุปยอดหนี้สุทธิรวม และยอดคงค้างแยกรายบุคคลแบบชัดเจน
+- [x] **Update Expense (Edit):** แก้ไขรายละเอียดบิล ยอดเงิน หรือคนร่วมหารย้อนหลังได้ โดยระบบจะคำนวณส่วนแบ่งหนี้ใหม่ให้อัตโนมัติ
+- [x] **Delete Expense:** ลบบิลที่ไม่ต้องการ พร้อมหน้าต่างยืนยันป้องกันการกดผิด
+- [x] **Debt Settlement:** บันทึกการคืนเงินระหว่างเพื่อน เพื่อตัดยอดหนี้ที่ค้างชำระกันอยู่
 
-### Backend
-- **Framework:** Django 5.x + Django REST Framework
-- **Environment & Package Manager:** `uv` (Fast Python Package Manager)
-- **OpenID Connect Provider:** `django-oidc-provider` (RSA-256 JWT, PKCE S256)
-- **CORS Management:** `django-cors-headers`
-- **Database:** SQLite (พร้อม Management Command สำหรับ Seed ข้อมูล)
+### 🌙 ฟีเจอร์เสริมพิเศษ (Extra Features)
+- [x] **Dark Mode (โหมดกลางคืน):** สลับธีมมืด/สว่างได้ง่าย ๆ ผ่านปุ่มพระจันทร์บนแถบ AppBar หรือหน้า Profile พร้อมจำการตั้งค่าไว้ในเครื่อง
+- [x] **Category Filter:** แถบเลือกกรองดูค่าใช้จ่ายตามหมวดหมู่ เช่น อาหาร, การเดินทาง, ที่พัก, บันเทิง, ช้อปปิ้ง
 
 ---
 
-## 5. Prerequisites & Environment Setup (สิ่งที่ต้องเตรียมก่อนรัน)
+## ③ เทคโนโลยีที่ใช้ (Tech Stack)
 
-1. **Python 3.10 ขึ้นไป**
-2. **uv** (ติดตั้งง่ายผ่าน `pip install uv` หรือตามคู่มือทางการของ Astral)
-3. **Flutter SDK 3.13+** (พร้อมคำสั่ง `flutter` ใน PATH)
-4. **Google Chrome** (สำหรับรัน Flutter Web)
+### 📱 Frontend (Mobile & Web)
+- **Flutter Version:** `3.47.x` (Dart `3.13.x`)
+- **State Management & DI:** `provider` (MVVM Architecture: Models, Views, ViewModels, Repositories, Services)
+- **HTTP Client:** `dio` (Stateless Network Client พร้อมแนบ Bearer Token)
+- **Local Storage:** `shared_preferences` (จัดการ Session Token และ Theme Mode)
+- **Crypto & Security:** `crypto` (คำนวณ SHA-256 Code Challenge สำหรับ PKCE)
+- **Date & Number Formatting:** `intl`
+
+### 🖥️ Backend
+- **Framework:** `Django 5.x` + `Django REST Framework`
+- **Package & Environment Manager:** `uv` (Astral's extremely fast Python package manager)
+- **OIDC Provider:** `django-oidc-provider` (มาตรฐาน OpenID Connect, RS256 JWT, PKCE S256)
+- **CORS Handling:** `django-cors-headers`
+- **Database:** `SQLite` (พร้อมระบบ Auto-seed ข้อมูลเริ่มต้น)
 
 ---
 
-## 6. Step-by-step Run Instructions (วิธีการรันระบบแบบ Zero-Error)
+## ④ สิ่งที่ต้องติดตั้งก่อนรัน (Prerequisites)
 
-> [!IMPORTANT]  
-> กรุณาตรวจสอบให้แน่ใจว่ารัน Backend ก่อนเปิด Frontend เพื่อให้ OIDC Discovery และ Token Endpoint พร้อมให้บริการ
+ก่อนเริ่มต้นรันระบบ กรุณาตรวจสอบว่าในเครื่องมีโปรแกรมเหล่านี้ติดตั้งเรียบร้อยแล้ว:
 
-### ขั้นตอนที่ 1: ติดตั้งและรัน Backend (Terminal ที่ 1)
-```powershell
-# 1. เข้าสู่โฟลเดอร์ backend
+1. **Python (เวอร์ชัน 3.10 ขึ้นไป)** — [ดาวน์โหลด Python](https://www.python.org/downloads/)
+2. **uv (ตัวจัดการแพ็กเกจ Python)** — [คู่มือติดตั้ง uv](https://docs.astral.sh/uv/getting-started/installation/)
+   *(สำหรับ Windows ติดตั้งผ่าน PowerShell: `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"` หรือ `pip install uv`)*
+3. **Flutter SDK (เวอร์ชัน 3.x ขึ้นไป)** — [คู่มือติดตั้ง Flutter](https://docs.flutter.dev/get-started/install)
+4. **Google Chrome** — [ดาวน์โหลด Google Chrome](https://www.google.com/chrome/)
+
+---
+
+## ⑤ วิธีการรันระบบทีละขั้นตอน (How to Run)
+
+เปิด **Terminal 2 หน้าต่าง** แล้วรันคำสั่งตามลำดับดังนี้:
+
+### 🔹 Terminal 1: ฝั่ง Backend (Django OIDC Server)
+```bash
+# 1. เข้าไปที่โฟลเดอร์ backend
 cd backend
 
-# 2. ติดตั้ง Dependencies ทั้งหมดผ่าน uv
+# 2. ติดตั้ง Library ทั้งหมดผ่าน uv
 uv sync
 
-# 3. รัน Database Migrations
+# 3. รัน Migration ฐานข้อมูล
 uv run manage.py migrate
 
-# 4. Seed ข้อมูลผู้ใช้เริ่มต้น, OIDC Client (PKCE), และรายการบิลตัวอย่าง
+# 4. สร้างผู้ใช้ทดสอบและ OIDC Client เริ่มต้น
 uv run manage.py seed_splitsquad_data
 
-# 5. เริ่มต้นเซิร์ฟเวอร์ Django บนพอร์ต 8000
+# 5. เริ่มต้นเซิร์ฟเวอร์ Backend ที่พอร์ต 8000
 uv run manage.py runserver 0.0.0.0:8000
 ```
-เซิร์ฟเวอร์ Backend จะทำงานที่: **`http://127.0.0.1:8000`**
+> เซิร์ฟเวอร์ Backend จะพร้อมทำงานที่ `http://127.0.0.1:8000`
 
 ---
 
-### ขั้นตอนที่ 2: ติดตั้งและรัน Frontend (Terminal ที่ 2)
-```powershell
-# 1. เข้าสู่โฟลเดอร์ frontend
+### 🔹 Terminal 2: ฝั่ง Frontend (Flutter Web)
+```bash
+# 1. เข้าไปที่โฟลเดอร์ frontend
 cd frontend
 
-# 2. ดึง Flutter Dependencies
+# 2. ดาวน์โหลดแพ็กเกจ Flutter
 flutter pub get
 
-# 3. ตรวจสอบโค้ด (Zero Warnings / Zero Errors)
+# 3. ตรวจสอบความถูกต้องของโค้ดและการทดสอบ (Zero Issues)
 flutter analyze
 flutter test
 
-# 4. รันแอปพลิเคชันบน Chrome กำหนดพอร์ต 50000 ตามเกณฑ์ Week 16
+# 4. รันแอปพลิเคชันบนเบราว์เซอร์ Chrome ที่พอร์ต 50000
 flutter run -d chrome --web-port 50000
 ```
-เบราว์เซอร์ Chrome จะเปิดแอปพลิเคชันที่: **`http://localhost:50000`**
+> เบราว์เซอร์จะเปิดแอป SplitSquad ขึ้นมาที่ `http://localhost:50000`
 
 ---
 
-## 7. Test Accounts (บัญชีผู้ใช้สำหรับการตรวจให้คะแนน)
+## ⑥ บัญชีสำหรับทดสอบ (Demo Accounts)
 
-| ชื่อผู้ใช้ (Username) | รหัสผ่าน (Password) | สิทธิ์ / สถานะ | ข้อมูลทดสอบในระบบ |
+สามารถใช้บัญชีผู้ใช้ทดสอบด้านล่าง เพื่อล็อกอินที่หน้า OIDC Server:
+
+| Username | Password | ชื่อที่แสดง | รายละเอียดในระบบ |
 | :--- | :--- | :--- | :--- |
-| **`alice`** | `alice123` | User ทั่วไป | มีทั้งยอดที่เพื่อนติด และยอดที่ติดเพื่อน (ทดสอบดูสรุปยอดและเคลียร์หนี้ได้ทันที) |
-| **`bob`** | `bob123` | User ทั่วไป | สมาชิกร่วมหารบิล |
-| **`somchai`** | `somchai123` | User ทั่วไป | สมาชิกร่วมหารบิล |
-| **`admin`** | `admin123` | Superuser / Staff | ผู้ดูแลระบบ |
+| **`alice`** | `alice123` | Alice Chen | *(แนะนำ)* มีทั้งยอดที่เพื่อนติดและยอดที่ติดเพื่อน เหมาะสำหรับทดสอบดู Balance |
+| **`bob`** | `bob123` | Bob Smith | สมาชิกร่วมหารบิลค่าอาหารและทริป |
+| **`somchai`** | `somchai123` | Somchai Jaidee | สมาชิกร่วมหารบิล |
+| **`admin`** | `admin123` | System Admin | ผู้ดูแลระบบ (Superuser) |
 
-*(หน้าแรกของแอปพลิเคชันมีปุ่ม **Quick Presets** กดปุ่มเดียวเพื่อกรอก Username/Password ได้ทันที หรือกดปุ่ม "เข้าสู่ระบบด้วย Django OIDC (PKCE)" เพื่อทดสอบ Authorization Code Flow)*
+*ขั้นตอนการล็อกอิน: กดปุ่ม **"เข้าสู่ระบบด้วย OpenID Connect"** ที่หน้าแอป ระบบจะพาไปกรอก Username และ Password ที่หน้าเว็บของ OIDC Server เมื่อยืนยันตัวตนสำเร็จจะส่งกลับมาที่ Dashboard ทันที*
 
 ---
 
-## 8. Architecture & API Endpoints
+## ⑦ ภาพหน้าจอการทำงาน (Screenshots)
 
-### 8.1 สถาปัตยกรรมระบบ (MVVM Layer Separation)
-```
-[Flutter UI Views]
-  └── LoginScreen, DashboardScreen, AddExpenseScreen, ExpenseDetailScreen, ProfileScreen
-         │  (Observes State via Provider)
-[ViewModels]
-  └── AuthViewModel, ExpenseViewModel, ThemeViewModel
-         │  (Invokes Repositories, Receives Result<T>)
-[Repositories]
-  └── AuthRepositoryRemote, ExpenseRepositoryRemote
-         │  (Stateless Service Orchestration, Local Storage Persistence)
-[Services & ApiClient]
-  └── OidcAuthService, ExpenseApiService, Stateless ApiClient (Dio)
-         │  (HTTP / Bearer Token Header)
-[Django Backend]
-  └── OIDC Endpoints (/openid/), Protected DRF APIs (/api/expenses/, /api/summary/, /api/settle/)
-```
+### 1. หน้าเข้าสู่ระบบ (OIDC Sign In)
+หน้าจอเข้าสู่ระบบแบบ Single Sign-On สไตล์มินิมอล ส่งต่อไปยืนยันตัวตนที่ Identity Provider โดยแอปไม่เก็บรหัสผ่านในเครื่อง
 
-### 8.2 ตาราง REST API Endpoints
-| Method | Endpoint | การยืนยันตัวตน | หน้าที่การทำงาน |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/auth/token/` | Public | ยืนยันตัวตนและออก OIDC Token สำหรับ Mobile Client |
-| `GET` | `/openid/userinfo/` | Bearer Token | ดึง Claims ข้อมูลผู้ใช้ตามมาตรฐาน OpenID Connect |
-| `GET` | `/api/expenses/` | Bearer Token | ดึงรายการค่าใช้จ่ายทั้งหมด (รองรับ `?category=...`) |
-| `POST` | `/api/expenses/` | Bearer Token | สร้างบิลค่าใช้จ่ายใหม่และคำนวณส่วนหาร |
-| `PUT` | `/api/expenses/<id>/` | Bearer Token | แก้ไขบิลค่าใช้จ่ายและคำนวณส่วนหารใหม่ |
-| `DELETE` | `/api/expenses/<id>/` | Bearer Token | ลบรายการบิลค่าใช้จ่าย |
-| `GET` | `/api/summary/` | Bearer Token | ดึงข้อมูลสรุปยอดหนี้สุทธิและยอดคงค้างแยกรายบุคคล |
-| `POST` | `/api/settle/` | Bearer Token | บันทึกการเคลียร์หนี้และชำระเงินระหว่างบุคคล |
-| `GET` | `/api/users/` | Bearer Token | ดึงรายชื่อสมาชิกในระบบสำหรับเลือกหารเงิน |
+![Login Screen](docs/screenshots/login.png)
+
+### 2. หน้าแดชบอร์ดสรุปยอดหนี้ (Dashboard & Net Balance)
+แสดงภาพรวมยอดหนี้สุทธิ (เราติดเพื่อน / เพื่อนติดเรา), แถบกรองหมวดหมู่ค่าใช้จ่าย และรายการประวัติบิลทั้งหมด
+
+![Dashboard Screen](docs/screenshots/dashboard.png)
+
+### 3. หน้าเพิ่มและแก้ไขบิล (Add / Edit Expense Form)
+ฟอร์มกรอกรายละเอียดบิล พร้อมระบบคำนวณและเฉลี่ยยอดเงินต่อคนแบบเรียลไทม์ และระบบตรวจสอบข้อมูลก่อนบันทึก
+
+![Add Expense Screen](docs/screenshots/add_expense.png)
+
+### 4. โหมดมืด (Dark Mode 🌙)
+รองรับการสลับโหมดมืดเพื่อการใช้งานที่สบายตาในที่แสงน้อย
+
+![Dark Mode Screen](docs/screenshots/dark_mode.png)
+
+---
+
+## ⑧ 🎬 วิดีโอนำเสนอผลงาน (Demo Video)
+
+- **ลิงก์วิดีโอสาธิตการทำงาน (YouTube / Google Drive):**  
+  👉 **`https://youtu.be/your-demo-video-link`** *(กรุณาแนบลิงก์วิดีโอของท่านที่นี่)*
+
+---
+
+### 👨‍💻 ผู้จัดทำ (Developer)
+- **วิชา:** Mobile Application Development (Week 16 Course Project)
+- **นักศึกษา:** ภาควิชา/สาขาวิชา Mobile Dev
+- **GitHub Repository:** `https://github.com/rachtachar/mobiledev69` (Branch: `project`)
