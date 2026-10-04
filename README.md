@@ -138,8 +138,7 @@ flutter run -d chrome --web-port 50000
 | :--- | :--- | :--- | :--- |
 | **`alice`** | `alice123` | Alice Chen | *(แนะนำ)* มีทั้งยอดที่เพื่อนติดและยอดที่ติดเพื่อน เหมาะสำหรับทดสอบดู Balance |
 | **`bob`** | `bob123` | Bob Smith | สมาชิกร่วมหารบิลค่าอาหารและทริป |
-| **`somchai`** | `somchai123` | Somchai Jaidee | สมาชิกร่วมหารบิล |
-| **`admin`** | `admin123` | System Admin | ผู้ดูแลระบบ (Superuser) |
+
 
 *ขั้นตอนการล็อกอิน: กดปุ่ม **"เข้าสู่ระบบด้วย OpenID Connect"** ที่หน้าแอป ระบบจะพาไปกรอก Username และ Password ที่หน้าเว็บของ OIDC Server เมื่อยืนยันตัวตนสำเร็จจะส่งกลับมาที่ Dashboard ทันที*
 
@@ -181,11 +180,7 @@ flutter run -d chrome --web-port 50000
 ## ⑧ 🎬 วิดีโอนำเสนอผลงาน (Demo Video)
 
 - **ลิงก์วิดีโอสาธิตการทำงาน (YouTube / Google Drive):**  
-  👉 **`https://youtu.be/your-demo-video-link`** *(กรุณาแนบลิงก์วิดีโอของท่านที่นี่)*
+  👉 **`https://youtu.be/hwwtz8hAN74`** 
 
 ---
 
-### 👨‍💻 ผู้จัดทำ (Developer)
-- **วิชา:** Mobile Application Development (Week 16 Course Project)
-- **นักศึกษา:** ภาควิชา/สาขาวิชา Mobile Dev
-- **GitHub Repository:** `https://github.com/rachtachar/mobiledev69` (Branch: `project`)
