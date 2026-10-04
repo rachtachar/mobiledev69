@@ -46,6 +46,25 @@ class UserListView(APIView):
         serializer = UserBasicSerializer(users, many=True)
         return Response(serializer.data)
 
+    def post(self, request):
+        username = request.data.get('username', '').strip().lower()
+        display_name = request.data.get('display_name', '').strip()
+        first_name = request.data.get('first_name', '').strip() or display_name
+        email = request.data.get('email', '').strip()
+
+        if not username:
+            return Response({'error': 'กรุณาระบุชื่อผู้ใช้ (username)'}, status=status.HTTP_400_BAD_REQUEST)
+        if User.objects.filter(username=username).exists():
+            return Response({'error': f'มีชื่อผู้ใช้ "{username}" ในระบบแล้ว'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.create_user(
+            username=username,
+            first_name=first_name,
+            email=email or f"{username}@splitsquad.app",
+            password=f"{username}123"
+        )
+        return Response(UserBasicSerializer(user).data, status=status.HTTP_201_CREATED)
+
 
 class BalanceSummaryView(APIView):
     """

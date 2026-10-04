@@ -229,14 +229,23 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // 4. Split participants selection
-                const Text(
-                  '👥 เลือกผู้ร่วมหารในกลุ่ม:',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textDark,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      '👥 เลือกผู้ร่วมหารในกลุ่ม:',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textDark,
+                      ),
+                    ),
+                    TextButton.icon(
+                      icon: const Icon(Icons.person_add_alt_1, size: 16),
+                      label: const Text('เพิ่มเพื่อน'),
+                      onPressed: () => _showAddFriendDialog(context),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
 
@@ -345,6 +354,88 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showAddFriendDialog(BuildContext context) {
+    final usernameCtrl = TextEditingController();
+    final nameCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.person_add_alt_1, color: AppTheme.primaryColor),
+            SizedBox(width: 8),
+            Text('เพิ่มเพื่อนร่วมกลุ่ม'),
+          ],
+        ),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: usernameCtrl,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'ชื่อผู้ใช้ (Username) *',
+                  hintText: 'เช่น david, somying',
+                  prefixIcon: Icon(Icons.alternate_email),
+                ),
+                validator: (val) {
+                  if (val == null || val.trim().isEmpty) return 'กรุณากรอก Username';
+                  if (val.trim().length < 3) return 'ต้องมีอย่างน้อย 3 ตัวอักษร';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'ชื่อที่แสดง (Display Name)',
+                  hintText: 'เช่น David Miller',
+                  prefixIcon: Icon(Icons.badge_outlined),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('ยกเลิก'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (!formKey.currentState!.validate()) return;
+              final messenger = ScaffoldMessenger.of(context);
+              final vm = context.read<ExpenseViewModel>();
+              final user = await vm.addUser(
+                username: usernameCtrl.text.trim(),
+                displayName: nameCtrl.text.trim().isNotEmpty ? nameCtrl.text.trim() : null,
+              );
+              if (dialogCtx.mounted) {
+                Navigator.of(dialogCtx).pop();
+              }
+              if (user != null && mounted) {
+                setState(() {
+                  _selectedMemberIds.add(user.id);
+                });
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('เพิ่ม "${user.displayName}" เรียบร้อยแล้ว!'),
+                    backgroundColor: AppTheme.accentGreen,
+                  ),
+                );
+              }
+            },
+            child: const Text('เพิ่มเพื่อน'),
+          ),
+        ],
       ),
     );
   }

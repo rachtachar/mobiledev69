@@ -78,6 +78,18 @@ class ExpenseApiService {
     return list.map((json) => UserModel.fromJson(json as Map<String, dynamic>)).toList();
   }
 
+  Future<UserModel> addUser({required String username, String? displayName}) async {
+    final response = await apiClient.post(
+      '/api/users/',
+      data: {
+        'username': username,
+        if (displayName != null && displayName.isNotEmpty)
+          'display_name': displayName,
+      },
+    );
+    return UserModel.fromJson(response.data as Map<String, dynamic>);
+  }
+
   Future<void> settleDebt({required int creditorId, required double amount}) async {
     await apiClient.post(
       '/api/settle/',

@@ -23,6 +23,7 @@ abstract class ExpenseRepository {
   Future<Result<void>> deleteExpense(int id);
   Future<Result<BalanceSummaryModel>> getSummary();
   Future<Result<List<UserModel>>> getUsers();
+  Future<Result<UserModel>> addUser({required String username, String? displayName});
   Future<Result<void>> settleDebt({required int creditorId, required double amount});
 }
 
@@ -122,6 +123,18 @@ class ExpenseRepositoryRemote implements ExpenseRepository {
     try {
       final users = await apiService.getUsers();
       return Success(users);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
+
+  @override
+  Future<Result<UserModel>> addUser({required String username, String? displayName}) async {
+    try {
+      final user = await apiService.addUser(username: username, displayName: displayName);
+      return Success(user);
     } on Exception catch (e, st) {
       return Failure(e, st);
     } catch (e, st) {

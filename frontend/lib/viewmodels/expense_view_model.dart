@@ -161,6 +161,25 @@ class ExpenseViewModel extends ChangeNotifier {
     }
   }
 
+  Future<UserModel?> addUser({required String username, String? displayName}) async {
+    _isSubmitting = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await repository.addUser(username: username, displayName: displayName);
+    _isSubmitting = false;
+
+    if (result.isSuccess) {
+      _successMessage = 'เพิ่มเพื่อนใหม่ "${result.dataOrNull?.displayName}" สำเร็จ!';
+      await loadData();
+      return result.dataOrNull;
+    } else {
+      _errorMessage = result.errorOrNull?.toString().replaceAll('Exception: ', '') ?? 'ไม่สามารถเพิ่มเพื่อนได้';
+      notifyListeners();
+      return null;
+    }
+  }
+
   Future<bool> settleDebt({required int creditorId, required double amount}) async {
     _isSubmitting = true;
     _errorMessage = null;

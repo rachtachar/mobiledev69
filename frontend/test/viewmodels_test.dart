@@ -155,6 +155,19 @@ class FakeExpenseRepository implements ExpenseRepository {
   }
 
   @override
+  Future<Result<UserModel>> addUser({required String username, String? displayName}) async {
+    final newUser = UserModel(
+      id: 99,
+      username: username,
+      firstName: displayName ?? username,
+      lastName: '',
+      email: '$username@example.com',
+      displayName: displayName ?? username,
+    );
+    return Success(newUser);
+  }
+
+  @override
   Future<Result<void>> settleDebt({required int creditorId, required double amount}) async {
     return const Success(null);
   }
@@ -244,6 +257,16 @@ void main() {
       final deleteOk = await vm.deleteExpense(vm.expenses.first.id);
       expect(deleteOk, isTrue);
       expect(vm.expenses.isEmpty, isTrue);
+    });
+
+    test('addUser successfully creates and adds user', () async {
+      final fakeRepo = FakeExpenseRepository();
+      final vm = ExpenseViewModel(repository: fakeRepo);
+
+      final user = await vm.addUser(username: 'david', displayName: 'David Miller');
+      expect(user, isNotNull);
+      expect(user?.username, equals('david'));
+      expect(user?.displayName, equals('David Miller'));
     });
   });
 }
