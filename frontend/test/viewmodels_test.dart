@@ -38,7 +38,21 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  void logout() {
+  Future<Result<UserModel>> loginWithOidcCode({
+    required String code,
+    required String codeVerifier,
+    required String redirectUri,
+  }) async {
+    return login('alice', 'alice123');
+  }
+
+  @override
+  Future<bool> restoreSession() async {
+    return isAuthenticated;
+  }
+
+  @override
+  Future<void> logout() async {
     _user = null;
     _token = null;
   }
@@ -86,6 +100,35 @@ class FakeExpenseRepository implements ExpenseRepository {
   }
 
   @override
+  Future<Result<ExpenseModel>> updateExpense({
+    required int id,
+    required String title,
+    required double amount,
+    required String category,
+    String notes = '',
+    List<int>? participantIds,
+  }) async {
+    final idx = _items.indexWhere((e) => e.id == id);
+    if (idx != -1) {
+      final old = _items[idx];
+      final updated = ExpenseModel(
+        id: old.id,
+        title: title,
+        amount: amount,
+        category: category,
+        categoryDisplay: category,
+        payer: old.payer,
+        notes: notes,
+        createdAt: old.createdAt,
+        splits: old.splits,
+      );
+      _items[idx] = updated;
+      return Success(updated);
+    }
+    return Failure(Exception('Expense not found'));
+  }
+
+  @override
   Future<Result<void>> deleteExpense(int id) async {
     _items.removeWhere((e) => e.id == id);
     return const Success(null);
@@ -118,6 +161,8 @@ class FakeExpenseRepository implements ExpenseRepository {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('AuthViewModel Tests', () {
     test('Successful login updates currentUser and isAuthenticated', () async {
       final fakeRepo = FakeAuthRepository();
@@ -144,6 +189,17 @@ void main() {
       expect(vm.isAuthenticated, isFalse);
       expect(vm.errorMessage, isNotNull);
     });
+
+    test('Logout clears user and token', () async {
+      final fakeRepo = FakeAuthRepository();
+      final vm = AuthViewModel(authRepository: fakeRepo);
+      await vm.login('alice', 'alice123');
+      expect(vm.isAuthenticated, isTrue);
+
+      await vm.logout();
+      expect(vm.isAuthenticated, isFalse);
+      expect(vm.currentUser, isNull);
+    });
   });
 
   group('ExpenseViewModel Tests', () {
@@ -158,7 +214,7 @@ void main() {
       expect(vm.availableUsers.length, equals(2));
     });
 
-    test('createExpense adds an item and refreshes list', () async {
+    test('createExpense and updateExpense workflow', () async {
       final fakeRepo = FakeExpenseRepository();
       final vm = ExpenseViewModel(repository: fakeRepo);
 
@@ -171,6 +227,23 @@ void main() {
       expect(ok, isTrue);
       expect(vm.expenses.length, equals(1));
       expect(vm.expenses.first.title, equals('Dinner with team'));
+
+      // Test update
+      final updateOk = await vm.updateExpense(
+        id: vm.expenses.first.id,
+        title: 'Dinner with team (Updated)',
+        amount: 850.0,
+        category: 'food',
+      );
+
+      expect(updateOk, isTrue);
+      expect(vm.expenses.first.title, equals('Dinner with team (Updated)'));
+      expect(vm.expenses.first.amount, equals(850.0));
+
+      // Test delete
+      final deleteOk = await vm.deleteExpense(vm.expenses.first.id);
+      expect(deleteOk, isTrue);
+      expect(vm.expenses.isEmpty, isTrue);
     });
   });
 }

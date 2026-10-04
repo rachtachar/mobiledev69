@@ -16,22 +16,31 @@ class Command(BaseCommand):
 
         # 2. Setup standard OIDC Client for Flutter App
         client_id = "flutter-mobile-client"
+        redirect_uris = [
+            'http://localhost:50000/callback',
+            'http://127.0.0.1:50000/callback',
+            'http://localhost:50000',
+            'http://127.0.0.1:50000',
+            'com.example.frontend:/oauth2redirect',
+            'http://localhost:3000/callback',
+            'http://127.0.0.1:8000/callback',
+            'http://localhost:8000/callback',
+        ]
         client, created = Client.objects.get_or_create(
             client_id=client_id,
             defaults={
                 'name': 'SplitSquad Flutter App',
                 'client_type': 'public',
                 'jwt_alg': 'RS256',
-                'require_consent': False,
+                'require_consent': True,
                 'reuse_consent': True,
-                'redirect_uris': [
-                    'com.example.frontend:/oauth2redirect',
-                    'http://localhost:3000/callback',
-                    'http://127.0.0.1:8000/callback',
-                    'http://localhost:8000/callback',
-                ],
+                'redirect_uris': redirect_uris,
             }
         )
+        client.redirect_uris = redirect_uris
+        client.client_type = 'public'
+        client.save()
+
         code_rt = ResponseType.objects.filter(value='code').first()
         id_token_rt = ResponseType.objects.filter(value='id_token token').first()
         if code_rt:

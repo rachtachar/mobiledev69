@@ -82,6 +82,30 @@ class ExpenseCreateSerializer(serializers.ModelSerializer):
 
         return expense
 
+    def update(self, instance, validated_data):
+        participant_ids = validated_data.pop('participant_ids', None)
+        for attr, val in validated_data.items():
+            setattr(instance, attr, val)
+        instance.save()
+
+        if participant_ids is not None:
+            instance.splits.all().delete()
+            users = list(User.objects.filter(id__in=participant_ids))
+            if users:
+                split_amount = (instance.amount / Decimal(len(users))).quantize(Decimal('0.01'))
+                for u in users:
+                    is_settled = (u.id == instance.payer.id)
+                    ExpenseSplit.objects.create(
+                        expense=instance,
+                        user=u,
+                        amount_owed=split_amount,
+                        is_settled=is_settled
+                    )
+        return instance
+
+    def to_representation(self, instance):
+        return ExpenseSerializer(instance, context=self.context).data
+
 
 class SettlementSerializer(serializers.ModelSerializer):
     debtor = UserBasicSerializer(read_only=True)

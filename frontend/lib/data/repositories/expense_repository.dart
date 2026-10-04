@@ -1,0 +1,143 @@
+import '../../core/result.dart';
+import '../models/expense_model.dart';
+import '../models/user_model.dart';
+import '../services/expense_api_service.dart';
+
+abstract class ExpenseRepository {
+  Future<Result<List<ExpenseModel>>> getExpenses({String? category});
+  Future<Result<ExpenseModel>> createExpense({
+    required String title,
+    required double amount,
+    required String category,
+    String notes = '',
+    List<int>? participantIds,
+  });
+  Future<Result<ExpenseModel>> updateExpense({
+    required int id,
+    required String title,
+    required double amount,
+    required String category,
+    String notes = '',
+    List<int>? participantIds,
+  });
+  Future<Result<void>> deleteExpense(int id);
+  Future<Result<BalanceSummaryModel>> getSummary();
+  Future<Result<List<UserModel>>> getUsers();
+  Future<Result<void>> settleDebt({required int creditorId, required double amount});
+}
+
+class ExpenseRepositoryRemote implements ExpenseRepository {
+  final ExpenseApiService apiService;
+
+  ExpenseRepositoryRemote({required this.apiService});
+
+  @override
+  Future<Result<List<ExpenseModel>>> getExpenses({String? category}) async {
+    try {
+      final list = await apiService.getExpenses(category: category);
+      return Success(list);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
+
+  @override
+  Future<Result<ExpenseModel>> createExpense({
+    required String title,
+    required double amount,
+    required String category,
+    String notes = '',
+    List<int>? participantIds,
+  }) async {
+    try {
+      final expense = await apiService.createExpense(
+        title: title,
+        amount: amount,
+        category: category,
+        notes: notes,
+        participantIds: participantIds,
+      );
+      return Success(expense);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
+
+  @override
+  Future<Result<ExpenseModel>> updateExpense({
+    required int id,
+    required String title,
+    required double amount,
+    required String category,
+    String notes = '',
+    List<int>? participantIds,
+  }) async {
+    try {
+      final expense = await apiService.updateExpense(
+        id: id,
+        title: title,
+        amount: amount,
+        category: category,
+        notes: notes,
+        participantIds: participantIds,
+      );
+      return Success(expense);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
+
+  @override
+  Future<Result<void>> deleteExpense(int id) async {
+    try {
+      await apiService.deleteExpense(id);
+      return const Success(null);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
+
+  @override
+  Future<Result<BalanceSummaryModel>> getSummary() async {
+    try {
+      final summary = await apiService.getSummary();
+      return Success(summary);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
+
+  @override
+  Future<Result<List<UserModel>>> getUsers() async {
+    try {
+      final users = await apiService.getUsers();
+      return Success(users);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
+
+  @override
+  Future<Result<void>> settleDebt({required int creditorId, required double amount}) async {
+    try {
+      await apiService.settleDebt(creditorId: creditorId, amount: amount);
+      return const Success(null);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
+}
