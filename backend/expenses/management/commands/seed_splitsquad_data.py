@@ -1,12 +1,11 @@
-from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from oidc_provider.models import Client, ResponseType, RSAKey
-from expenses.models import Expense, ExpenseSplit, ExpenseCategory, FriendRequest
+from expenses.models import FriendRequest
 
 class Command(BaseCommand):
-    help = "Seeds initial development users, OIDC client, and sample group expenses."
+    help = "Seeds initial development users, OIDC client, and demo friendships."
 
     def handle(self, *args, **options):
         # 1. Ensure RSA Key for OIDC exists
@@ -96,60 +95,5 @@ class Command(BaseCommand):
                 defaults={'status': 'accepted'}
             )
         self.stdout.write(self.style.SUCCESS("Demo friendships established!"))
-
-        # 4. Create Sample Expenses if empty
-        if not Expense.objects.exists():
-            sample_bills = [
-                {
-                    'title': 'บุฟเฟต์ชาบู ชาบูชิ เซ็นทรัล',
-                    'amount': Decimal('1596.00'),
-                    'category': ExpenseCategory.FOOD,
-                    'payer': users_dict['alice'],
-                    'notes': 'กินหลังสอบเสร็จ 4 คน หารเท่ากัน',
-                    'participants': [users_dict['admin'], users_dict['alice'], users_dict['bob'], users_dict['somchai']],
-                },
-                {
-                    'title': 'ค่า Grab เดินทางไปสถานีรถไฟ',
-                    'amount': Decimal('450.00'),
-                    'category': ExpenseCategory.TRANSPORT,
-                    'payer': users_dict['bob'],
-                    'notes': 'Grab Van 7 ที่นั่ง',
-                    'participants': [users_dict['admin'], users_dict['alice'], users_dict['bob']],
-                },
-                {
-                    'title': 'ค่าห้องพักพูลวิลล่า หัวหิน (2 คืน)',
-                    'amount': Decimal('4800.00'),
-                    'category': ExpenseCategory.HOUSING,
-                    'payer': users_dict['admin'],
-                    'notes': 'จองผ่าน Agoda',
-                    'participants': [users_dict['admin'], users_dict['alice'], users_dict['bob'], users_dict['somchai']],
-                },
-                {
-                    'title': 'ตั๋วบัตรคอนเสิร์ตดนตรีในสวน',
-                    'amount': Decimal('1200.00'),
-                    'category': ExpenseCategory.ENTERTAINMENT,
-                    'payer': users_dict['somchai'],
-                    'notes': 'บัตร Early Bird 2 ใบ',
-                    'participants': [users_dict['admin'], users_dict['somchai']],
-                },
-            ]
-
-            for bill in sample_bills:
-                exp = Expense.objects.create(
-                    title=bill['title'],
-                    amount=bill['amount'],
-                    category=bill['category'],
-                    payer=bill['payer'],
-                    notes=bill['notes'],
-                )
-                split_val = (bill['amount'] / Decimal(len(bill['participants']))).quantize(Decimal('0.01'))
-                for p in bill['participants']:
-                    ExpenseSplit.objects.create(
-                        expense=exp,
-                        user=p,
-                        amount_owed=split_val,
-                        is_settled=(p.id == bill['payer'].id)
-                    )
-                self.stdout.write(f"Created sample bill: {exp.title} ({exp.amount} THB)")
 
         self.stdout.write(self.style.SUCCESS("All seed data created successfully!"))

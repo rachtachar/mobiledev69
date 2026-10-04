@@ -415,19 +415,20 @@ class ExpenseDetailScreen extends StatelessWidget {
                           ),
                         ),
                       ]
-                      // Case 4: Owner can directly mark received if friend pays directly in cash
+                      // Case 4: Owner can directly mark received if friend pays directly in cash / transfer
                       else if (isMine && !isPayer && !split.isSettled && !split.pendingVerification) ...[
                         const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.check_circle_outline, color: AppTheme.accentGreen),
-                          tooltip: 'บันทึกว่าได้รับเงินแล้วโดยตรง',
-                          onPressed: () => _confirmSettleSplit(
-                            context,
-                            debtorId: split.user.id,
-                            name: split.user.displayName,
-                            amount: split.amountOwed,
-                            isReceive: true,
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.teal.shade50,
+                            foregroundColor: Colors.teal.shade800,
+                            side: BorderSide(color: Colors.teal.shade300),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            elevation: 0,
                           ),
+                          icon: const Icon(Icons.check_circle_outline, size: 14),
+                          label: const Text('บันทึกว่าได้รับเงินแล้ว', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          onPressed: () => _confirmDirectReceived(context, split),
                         ),
                       ],
                     ],
@@ -561,34 +562,23 @@ class ExpenseDetailScreen extends StatelessWidget {
     );
   }
 
-  void _confirmSettleSplit(
-    BuildContext context, {
-    int? debtorId,
-    int? creditorId,
-    required String name,
-    required double amount,
-    required bool isReceive,
-  }) {
+  void _confirmDirectReceived(BuildContext context, ExpenseSplitModel split) {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
-            Icon(
-              isReceive ? Icons.check_circle_outline : Icons.payment,
-              color: isReceive ? AppTheme.accentGreen : AppTheme.accentRed,
-            ),
-            const SizedBox(width: 8),
+            Icon(Icons.check_circle_outline, color: AppTheme.accentGreen),
+            SizedBox(width: 8),
             Text(
-              isReceive ? 'ได้รับเงินแล้ว' : 'โอนเงินคืนแล้ว',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              'บันทึกว่าได้รับเงินแล้ว',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],
         ),
         content: Text(
-          isReceive
-              ? 'คุณได้รับเงินคืนจำนวน ฿${amount.toStringAsFixed(2)} จาก "$name" สำหรับบิลนี้เรียบร้อยแล้วใช่หรือไม่?'
-              : 'คุณได้โอนเงินคืนจำนวน ฿${amount.toStringAsFixed(2)} ให้กับ "$name" สำหรับบิลนี้เรียบร้อยแล้วใช่หรือไม่?',
+          'คุณได้รับเงินคืนจำนวน ฿${split.amountOwed.toStringAsFixed(2)} จาก "${split.user.displayName}" สำหรับบิลนี้เรียบร้อยแล้วใช่หรือไม่?\n\n'
+          'ระบบจะเปลี่ยนสถานะของ ${split.user.displayName} เป็น "ชำระเรียบร้อยแล้ว ✔️" ทันที',
         ),
         actions: [
           TextButton(
@@ -597,24 +587,16 @@ class ExpenseDetailScreen extends StatelessWidget {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: isReceive ? AppTheme.accentGreen : AppTheme.primaryColor,
+              backgroundColor: AppTheme.accentGreen,
             ),
             onPressed: () async {
               Navigator.of(dialogCtx).pop();
               final vm = context.read<ExpenseViewModel>();
-              await vm.settleDebt(
-                debtorId: debtorId,
-                creditorId: creditorId,
-                amount: amount,
-              );
-              if (context.mounted) {
+              final ok = await vm.verifySplitPayment(splitId: split.id, confirm: true);
+              if (context.mounted && ok) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(
-                      isReceive
-                          ? 'บันทึกว่าได้รับเงินคืนจาก $name เรียบร้อยแล้ว'
-                          : 'บันทึกการโอนเงินคืน $name เรียบร้อยแล้ว',
-                    ),
+                    content: Text('บันทึกว่า ${split.user.displayName} ชำระเงินเรียบร้อยแล้ว ✔️'),
                     backgroundColor: AppTheme.accentGreen,
                   ),
                 );
