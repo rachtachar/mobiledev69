@@ -86,4 +86,11 @@ class OidcAuthService {
     final data = response.data as Map<String, dynamic>;
     return UserModel.fromJson(data);
   }
+
+  /// Inform server of user logout
+  Future<void> logout() async {
+    try {
+      await apiClient.post('/api/auth/logout/');
+    } catch (_) {}
+  }
 }

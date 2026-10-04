@@ -96,6 +96,9 @@ class AuthRepositoryRemote implements AuthRepository {
     _accessToken = null;
     _currentUser = null;
     try {
+      await authService.logout();
+    } catch (_) {}
+    try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_keyToken);
       await prefs.remove(_keyUser);

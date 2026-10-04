@@ -211,6 +211,18 @@ class LoginTokenView(APIView):
         })
 
 
+class LogoutTokenView(APIView):
+    """
+    Terminates user session on OIDC/Django backend.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        from django.contrib.auth import logout
+        logout(request)
+        return Response({'message': 'Logged out successfully'})
+
+
 class FriendListView(APIView):
     """
     List accepted friends of the current user.

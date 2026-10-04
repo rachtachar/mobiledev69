@@ -6,6 +6,7 @@ from .views import (
     BalanceSummaryView,
     SettleDebtView,
     LoginTokenView,
+    LogoutTokenView,
     FriendListView,
     FriendRequestListView,
     FriendRequestRespondView,
@@ -17,6 +18,7 @@ router.register(r'expenses', ExpenseViewSet, basename='expense')
 urlpatterns = [
     path('', include(router.urls)),
     path('auth/token/', LoginTokenView.as_view(), name='auth-token'),
+    path('auth/logout/', LogoutTokenView.as_view(), name='auth-logout'),
     path('users/', UserListView.as_view(), name='user-list'),
     path('summary/', BalanceSummaryView.as_view(), name='balance-summary'),
     path('settle/', SettleDebtView.as_view(), name='settle-debt'),

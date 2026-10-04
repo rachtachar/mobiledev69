@@ -36,6 +36,7 @@ class OidcHelper {
       'state': state,
       'code_challenge': codeChallenge,
       'code_challenge_method': 'S256',
+      'prompt': 'login',
     };
 
     final queryString = params.entries
