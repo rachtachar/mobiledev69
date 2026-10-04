@@ -10,6 +10,8 @@ from .views import (
     FriendListView,
     FriendRequestListView,
     FriendRequestRespondView,
+    MarkSplitPaidView,
+    VerifySplitPaymentView,
 )
 
 router = DefaultRouter()
@@ -25,4 +27,6 @@ urlpatterns = [
     path('friends/', FriendListView.as_view(), name='friend-list'),
     path('friends/requests/', FriendRequestListView.as_view(), name='friend-requests'),
     path('friends/requests/<int:pk>/respond/', FriendRequestRespondView.as_view(), name='friend-respond'),
+    path('splits/<int:pk>/mark-paid/', MarkSplitPaidView.as_view(), name='split-mark-paid'),
+    path('splits/<int:pk>/verify/', VerifySplitPaymentView.as_view(), name='split-verify'),
 ]

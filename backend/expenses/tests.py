@@ -111,4 +111,31 @@ class FriendRequestTests(TestCase):
         bal_resp = self.client.get('/api/summary/')
         self.assertEqual(bal_resp.data['total_owed_to_you'], 100.0)
 
+    def test_debtor_mark_paid_and_owner_verify(self):
+        from expenses.models import Expense, ExpenseSplit
+        exp = Expense.objects.create(title='Dinner with friends', amount=300, payer=self.user1)
+        ExpenseSplit.objects.create(expense=exp, user=self.user1, amount_owed=150, is_settled=True)
+        split = ExpenseSplit.objects.create(expense=exp, user=self.user2, amount_owed=150, is_settled=False)
+
+        # 1. Debtor (user2) notifies they paid
+        self.client.force_authenticate(user=self.user2)
+        resp_paid = self.client.post(f'/api/splits/{split.id}/mark-paid/')
+        self.assertEqual(resp_paid.status_code, status.HTTP_200_OK)
+        split.refresh_from_db()
+        self.assertTrue(split.pending_verification)
+        self.assertFalse(split.is_settled)
+
+        # 2. Bill owner (user1) verifies and confirms
+        self.client.force_authenticate(user=self.user1)
+        resp_verify = self.client.post(f'/api/splits/{split.id}/verify/', {'action': 'confirm'})
+        self.assertEqual(resp_verify.status_code, status.HTTP_200_OK)
+        split.refresh_from_db()
+        self.assertFalse(split.pending_verification)
+        self.assertTrue(split.is_settled)
+
+        # 3. Check balance is cleared
+        bal_resp = self.client.get('/api/summary/')
+        self.assertEqual(bal_resp.data['total_owed_to_you'], 0.0)
+
+
 

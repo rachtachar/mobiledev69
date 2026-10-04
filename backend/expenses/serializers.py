@@ -21,7 +21,7 @@ class ExpenseSplitSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ExpenseSplit
-        fields = ['id', 'user', 'amount_owed', 'is_settled', 'settled_at']
+        fields = ['id', 'user', 'amount_owed', 'is_settled', 'settled_at', 'pending_verification', 'paid_marked_at']
 
 
 class ExpenseSerializer(serializers.ModelSerializer):

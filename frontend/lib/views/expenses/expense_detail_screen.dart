@@ -93,7 +93,7 @@ class ExpenseDetailScreen extends StatelessWidget {
                   Expanded(
                     child: Text(
                       isMine
-                          ? '🙋‍♂️ คุณเป็นคนสร้างและจ่ายบิลนี้ (มีสิทธิ์แก้ไขและลบ)'
+                          ? '🙋‍♂️ คุณเป็นคนสร้างและจ่ายบิลนี้ (มีสิทธิ์ตรวจสอบการชำระเงิน แก้ไข และลบ)'
                           : '👥 บิลนี้สร้างโดย ${currentExpense.payer.displayName} (คุณร่วมหาร)',
                       style: TextStyle(
                         fontSize: 12,
@@ -105,6 +105,41 @@ class ExpenseDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
+
+            // Pending Verification Alert Banner for Owner
+            if (isMine && currentExpense.splits.any((s) => s.pendingVerification))
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.amber.shade700, width: 1.5),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.notifications_active, color: Colors.orange, size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '🔔 มีเพื่อนแจ้งโอนเงินเข้ามา!',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textDark),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'ตรวจสอบเงินเข้าในบัญชีของคุณ แล้วกดปุ่ม ✔️ (ยืนยัน) หรือ ❌ (ปฏิเสธ) ที่ชื่อเพื่อนด้านล่างได้เลยครับ',
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade800),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // Header Card
             Card(
               child: Padding(
@@ -200,14 +235,40 @@ class ExpenseDetailScreen extends StatelessWidget {
               final isPayer = split.user.id == currentExpense.payer.id;
               final isMe = currentUser != null &&
                   (split.user.id == currentUser.id || split.user.username == currentUser.username);
-              final canMarkReceived = isMine && !isPayer && !split.isSettled;
-              final canMarkPaid = !isMine && isMe && !split.isSettled;
+
+              // Subtitle & color based on status
+              String statusText;
+              Color statusColor;
+              if (split.isSettled) {
+                statusText = 'ชำระเรียบร้อยแล้ว ✔️';
+                statusColor = AppTheme.accentGreen;
+              } else if (split.pendingVerification) {
+                if (isMine) {
+                  statusText = 'แจ้งโอนแล้ว (รอคุณตรวจสอบ ⏳)';
+                } else if (isMe) {
+                  statusText = 'แจ้งโอนแล้ว (รอเจ้าของบิลตรวจสอบ ⏳)';
+                } else {
+                  statusText = 'แจ้งโอนแล้ว (รอตรวจสอบ ⏳)';
+                }
+                statusColor = Colors.orange.shade800;
+              } else {
+                statusText = isMe ? 'คุณยังค้างชำระ' : 'ยังค้างชำระ';
+                statusColor = AppTheme.accentRed;
+              }
 
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: split.pendingVerification
+                      ? BorderSide(color: Colors.orange.shade400, width: 1.5)
+                      : BorderSide.none,
+                ),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: isPayer ? AppTheme.primaryColor : AppTheme.secondaryColor,
+                    backgroundColor: isPayer
+                        ? AppTheme.primaryColor
+                        : (split.pendingVerification ? Colors.orange : AppTheme.secondaryColor),
                     child: Text(
                       split.user.displayName.isNotEmpty
                           ? split.user.displayName[0].toUpperCase()
@@ -222,11 +283,13 @@ class ExpenseDetailScreen extends StatelessWidget {
                     ),
                   ),
                   subtitle: Text(
-                    split.isSettled ? 'ชำระเรียบร้อยแล้ว ✔️' : 'ยังค้างชำระ',
+                    statusText,
                     style: TextStyle(
                       fontSize: 12,
-                      color: split.isSettled ? AppTheme.accentGreen : AppTheme.accentRed,
-                      fontWeight: split.isSettled ? FontWeight.bold : FontWeight.normal,
+                      color: statusColor,
+                      fontWeight: (split.isSettled || split.pendingVerification)
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                   trailing: Row(
@@ -240,30 +303,69 @@ class ExpenseDetailScreen extends StatelessWidget {
                           color: split.isSettled ? AppTheme.textMuted : AppTheme.textDark,
                         ),
                       ),
-                      if (canMarkReceived) ...[
+                      // Case 1: Owner sees pending verification -> buttons to confirm or reject
+                      if (isMine && !isPayer && split.pendingVerification) ...[
+                        const SizedBox(width: 6),
+                        IconButton(
+                          icon: const Icon(Icons.check_circle, color: AppTheme.accentGreen, size: 26),
+                          tooltip: 'ยืนยันได้รับเงินแล้ว',
+                          onPressed: () => _confirmVerifyPayment(context, split, true),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.cancel, color: AppTheme.accentRed, size: 26),
+                          tooltip: 'ปฏิเสธ (ยังไม่ได้รับ)',
+                          onPressed: () => _confirmVerifyPayment(context, split, false),
+                        ),
+                      ]
+                      // Case 2: Debtor sees unpaid split -> button to notify paid
+                      else if (!isMine && isMe && !split.isSettled && !split.pendingVerification) ...[
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            elevation: 0,
+                          ),
+                          icon: const Icon(Icons.payment, size: 14),
+                          label: const Text('แจ้งว่าโอนแล้ว', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          onPressed: () => _confirmNotifyPaid(context, split, currentExpense.payer.displayName),
+                        ),
+                      ]
+                      // Case 3: Debtor waiting for verification -> pending badge
+                      else if (!isMine && isMe && split.pendingVerification) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.hourglass_top, color: Colors.orange, size: 12),
+                              SizedBox(width: 4),
+                              Text(
+                                'รอตรวจ',
+                                style: TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ]
+                      // Case 4: Owner can directly mark received if friend pays directly in cash
+                      else if (isMine && !isPayer && !split.isSettled && !split.pendingVerification) ...[
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: const Icon(Icons.check_circle, color: AppTheme.accentGreen),
-                          tooltip: 'ทำเครื่องหมายว่าได้รับเงินคืนจาก ${split.user.displayName} แล้ว',
+                          icon: const Icon(Icons.check_circle_outline, color: AppTheme.accentGreen),
+                          tooltip: 'บันทึกว่าได้รับเงินแล้วโดยตรง',
                           onPressed: () => _confirmSettleSplit(
                             context,
                             debtorId: split.user.id,
                             name: split.user.displayName,
                             amount: split.amountOwed,
                             isReceive: true,
-                          ),
-                        ),
-                      ] else if (canMarkPaid) ...[
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.payment, color: AppTheme.accentRed),
-                          tooltip: 'บันทึกว่าโอนคืนบิลนี้แล้ว',
-                          onPressed: () => _confirmSettleSplit(
-                            context,
-                            creditorId: currentExpense.payer.id,
-                            name: currentExpense.payer.displayName,
-                            amount: split.amountOwed,
-                            isReceive: false,
                           ),
                         ),
                       ],
@@ -274,6 +376,126 @@ class ExpenseDetailScreen extends StatelessWidget {
             }),
           ],
         ),
+      ),
+    );
+  }
+
+  void _confirmNotifyPaid(BuildContext context, ExpenseSplitModel split, String payerName) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.payment, color: AppTheme.primaryColor),
+            SizedBox(width: 8),
+            Text('แจ้งว่าโอนเงินแล้ว', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('คุณได้โอนเงิน ฿${split.amountOwed.toStringAsFixed(2)} ให้กับ "$payerName" เรียบร้อยแล้วใช่หรือไม่?'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.blue, size: 18),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'เมื่อกดยืนยัน ระบบจะส่งการแจ้งเตือนให้เจ้าของบิลตรวจสอบยอดเงิน และกดยืนยันรับเงินให้คุณครับ',
+                      style: TextStyle(fontSize: 11, color: Colors.blueGrey),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('ยกเลิก'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+            onPressed: () async {
+              Navigator.of(dialogCtx).pop();
+              final vm = context.read<ExpenseViewModel>();
+              final ok = await vm.markSplitPaid(split.id);
+              if (context.mounted && ok) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('แจ้ง $payerName ว่าโอนเงินแล้วเรียบร้อย รอเจ้าของบิลตรวจสอบยอด'),
+                    backgroundColor: AppTheme.accentGreen,
+                  ),
+                );
+              }
+            },
+            child: const Text('ยืนยันแจ้งโอน'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmVerifyPayment(BuildContext context, ExpenseSplitModel split, bool confirm) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              confirm ? Icons.check_circle_outline : Icons.cancel_outlined,
+              color: confirm ? AppTheme.accentGreen : AppTheme.accentRed,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              confirm ? 'ยืนยันการรับเงิน' : 'ปฏิเสธการแจ้งโอน',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Text(
+          confirm
+              ? 'คุณตรวจสอบยอดเงินและยืนยันว่าได้รับ ฿${split.amountOwed.toStringAsFixed(2)} จาก "${split.user.displayName}" แล้วใช่หรือไม่? ระบบจะตัดยอดหนี้ให้ทันที'
+              : 'คุณยังไม่ได้รับเงินจาก "${split.user.displayName}" ใช่หรือไม่? ระบบจะเปลี่ยนสถานะกลับเป็น "ยังค้างชำระ"',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('ยกเลิก'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: confirm ? AppTheme.accentGreen : AppTheme.accentRed,
+            ),
+            onPressed: () async {
+              Navigator.of(dialogCtx).pop();
+              final vm = context.read<ExpenseViewModel>();
+              final ok = await vm.verifySplitPayment(splitId: split.id, confirm: confirm);
+              if (context.mounted && ok) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      confirm
+                          ? 'ยืนยันการรับเงินจาก ${split.user.displayName} เรียบร้อยแล้ว'
+                          : 'ปฏิเสธการแจ้งโอนของ ${split.user.displayName} แล้ว',
+                    ),
+                    backgroundColor: confirm ? AppTheme.accentGreen : Colors.orange.shade800,
+                  ),
+                );
+              }
+            },
+            child: Text(confirm ? 'ยืนยันรับเงิน' : 'ปฏิเสธ'),
+          ),
+        ],
       ),
     );
   }

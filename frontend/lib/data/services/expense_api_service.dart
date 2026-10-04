@@ -141,5 +141,16 @@ class ExpenseApiService {
     );
     return response.data as Map<String, dynamic>;
   }
+
+  Future<void> markSplitPaid(int splitId) async {
+    await apiClient.post('/api/splits/$splitId/mark-paid/');
+  }
+
+  Future<void> verifySplitPayment({required int splitId, required String action}) async {
+    await apiClient.post(
+      '/api/splits/$splitId/verify/',
+      data: {'action': action},
+    );
+  }
 }
 

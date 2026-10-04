@@ -46,9 +46,16 @@ class ExpenseSplit(models.Model):
     amount_owed = models.DecimalField(max_digits=10, decimal_places=2)
     is_settled = models.BooleanField(default=False)
     settled_at = models.DateTimeField(null=True, blank=True)
+    pending_verification = models.BooleanField(default=False)
+    paid_marked_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        status = "จ่ายแล้ว" if self.is_settled else "ยังไม่จ่าย"
+        if self.is_settled:
+            status = "จ่ายแล้ว"
+        elif self.pending_verification:
+            status = "รอตรวจสอบการโอน"
+        else:
+            status = "ยังไม่จ่าย"
         return f"{self.user.username} ค้าง {self.amount_owed} บาท ใน {self.expense.title} ({status})"
 
 

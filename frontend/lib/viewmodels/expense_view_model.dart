@@ -261,6 +261,47 @@ class ExpenseViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> markSplitPaid(int splitId) async {
+    _isSubmitting = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await repository.markSplitPaid(splitId);
+    _isSubmitting = false;
+
+    if (result.isSuccess) {
+      _successMessage = 'แจ้งเจ้าของบิลว่าโอนเงินแล้วเรียบร้อย รอการตรวจสอบ';
+      await loadData();
+      return true;
+    } else {
+      _errorMessage = result.errorOrNull?.toString().replaceAll('Exception: ', '') ?? 'ไม่สามารถแจ้งโอนเงินได้';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> verifySplitPayment({required int splitId, required bool confirm}) async {
+    _isSubmitting = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await repository.verifySplitPayment(
+      splitId: splitId,
+      action: confirm ? 'confirm' : 'reject',
+    );
+    _isSubmitting = false;
+
+    if (result.isSuccess) {
+      _successMessage = confirm ? 'ยืนยันการรับเงินเรียบร้อยแล้ว' : 'ปฏิเสธการแจ้งโอนแล้ว';
+      await loadData();
+      return true;
+    } else {
+      _errorMessage = result.errorOrNull?.toString().replaceAll('Exception: ', '') ?? 'ไม่สามารถดำเนินการตรวจสอบได้';
+      notifyListeners();
+      return false;
+    }
+  }
+
   void clearMessages() {
     _errorMessage = null;
     _successMessage = null;

@@ -30,6 +30,8 @@ abstract class ExpenseRepository {
   Future<Result<Map<String, List<FriendRequestModel>>>> getFriendRequests();
   Future<Result<Map<String, dynamic>>> sendFriendRequest(String username);
   Future<Result<Map<String, dynamic>>> respondFriendRequest({required int requestId, required String action});
+  Future<Result<void>> markSplitPaid(int splitId);
+  Future<Result<void>> verifySplitPayment({required int splitId, required String action});
 }
 
 class ExpenseRepositoryRemote implements ExpenseRepository {
@@ -206,6 +208,30 @@ class ExpenseRepositoryRemote implements ExpenseRepository {
         action: action,
       );
       return Success(res);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
+
+  @override
+  Future<Result<void>> markSplitPaid(int splitId) async {
+    try {
+      await apiService.markSplitPaid(splitId);
+      return const Success(null);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
+
+  @override
+  Future<Result<void>> verifySplitPayment({required int splitId, required String action}) async {
+    try {
+      await apiService.verifySplitPayment(splitId: splitId, action: action);
+      return const Success(null);
     } on Exception catch (e, st) {
       return Failure(e, st);
     } catch (e, st) {

@@ -559,9 +559,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                   ),
-                  Text(
-                    formattedDate,
-                    style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isMine && expense.splits.any((s) => s.pendingVerification))
+                        Container(
+                          margin: const EdgeInsets.only(right: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade100,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.hourglass_top, color: Colors.orange, size: 11),
+                              SizedBox(width: 2),
+                              Text('รอตรวจ', style: TextStyle(fontSize: 10, color: Colors.deepOrange, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        )
+                      else if (!isMine && (mySplit?.pendingVerification ?? false))
+                        Container(
+                          margin: const EdgeInsets.only(right: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade100,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.hourglass_bottom, color: Colors.blue, size: 11),
+                              SizedBox(width: 2),
+                              Text('รอเจ้าของตรวจ', style: TextStyle(fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                      Text(
+                        formattedDate,
+                        style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -212,6 +212,16 @@ class FakeExpenseRepository implements ExpenseRepository {
     }
     return const Success({'message': 'ปฏิเสธคำขอเป็นเพื่อนแล้ว'});
   }
+
+  @override
+  Future<Result<void>> markSplitPaid(int splitId) async {
+    return const Success(null);
+  }
+
+  @override
+  Future<Result<void>> verifySplitPayment({required int splitId, required String action}) async {
+    return const Success(null);
+  }
 }
 
 void main() {

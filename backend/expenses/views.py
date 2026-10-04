@@ -7,10 +7,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from oidc_provider.models import Client, Token
 from oidc_provider.lib.utils.token import create_token
+from django.utils import timezone
 from .models import Expense, ExpenseSplit, Settlement, FriendRequest
 from .serializers import (
     ExpenseSerializer,
     ExpenseCreateSerializer,
+    ExpenseSplitSerializer,
     UserBasicSerializer,
     SettlementSerializer,
     FriendRequestSerializer
@@ -339,4 +341,75 @@ class FriendRequestRespondView(APIView):
             return Response({
                 'message': f'ปฏิเสธคำขอเป็นเพื่อนจาก {friend_req.from_user.username} แล้ว',
                 'request': FriendRequestSerializer(friend_req).data
+            })
+
+
+class MarkSplitPaidView(APIView):
+    """
+    Debtor notifies the payer that they have paid their split.
+    Endpoint: POST /api/splits/<int:pk>/mark-paid/
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        split = ExpenseSplit.objects.filter(pk=pk, user=request.user).first()
+        if not split:
+            return Response({'error': 'ไม่พบรายการนี้ หรือคุณไม่ใช่ผู้รับผิดชอบยอดนี้'}, status=status.HTTP_404_NOT_FOUND)
+        if split.is_settled:
+            return Response({'error': 'รายการนี้ชำระเรียบร้อยแล้ว'}, status=status.HTTP_400_BAD_REQUEST)
+
+        split.pending_verification = True
+        split.paid_marked_at = timezone.now()
+        split.save()
+
+        return Response({
+            'message': 'แจ้งเจ้าของบิลว่าโอนเงินแล้วเรียบร้อย รอเจ้าของบิลตรวจสอบ',
+            'split': ExpenseSplitSerializer(split).data
+        })
+
+
+class VerifySplitPaymentView(APIView):
+    """
+    Bill owner verifies or rejects the payment notification made by a debtor.
+    Endpoint: POST /api/splits/<int:pk>/verify/
+    Payload: {"action": "confirm"} or {"action": "reject"}
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        action = request.data.get('action', 'confirm').strip().lower()
+        if action not in ['confirm', 'reject']:
+            return Response({'error': 'การกระทำไม่ถูกต้อง (ต้องเป็น "confirm" หรือ "reject")'}, status=status.HTTP_400_BAD_REQUEST)
+
+        split = ExpenseSplit.objects.filter(pk=pk, expense__payer=request.user).first()
+        if not split:
+            return Response({'error': 'ไม่พบรายการนี้ หรือคุณไม่ใช่เจ้าของบิลผู้มีสิทธิ์ตรวจสอบ'}, status=status.HTTP_404_NOT_FOUND)
+        if split.is_settled:
+            return Response({'error': 'รายการนี้ชำระเรียบร้อยแล้ว'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if action == 'confirm':
+            split.is_settled = True
+            split.pending_verification = False
+            split.settled_at = timezone.now()
+            split.save()
+
+            # Record Settlement
+            Settlement.objects.create(
+                debtor=split.user,
+                creditor=request.user,
+                amount=split.amount_owed
+            )
+
+            return Response({
+                'message': f'ยืนยันการรับเงิน ฿{split.amount_owed} จาก {split.user.username} เรียบร้อยแล้ว',
+                'split': ExpenseSplitSerializer(split).data
+            })
+        else:
+            split.pending_verification = False
+            split.paid_marked_at = None
+            split.save()
+
+            return Response({
+                'message': f'ปฏิเสธการแจ้งโอนของ {split.user.username} แล้ว (สถานะกลับเป็นยังไม่ชำระ)',
+                'split': ExpenseSplitSerializer(split).data
             })

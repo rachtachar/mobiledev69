@@ -6,6 +6,8 @@ class ExpenseSplitModel {
   final double amountOwed;
   final bool isSettled;
   final DateTime? settledAt;
+  final bool pendingVerification;
+  final DateTime? paidMarkedAt;
 
   const ExpenseSplitModel({
     required this.id,
@@ -13,6 +15,8 @@ class ExpenseSplitModel {
     required this.amountOwed,
     required this.isSettled,
     this.settledAt,
+    this.pendingVerification = false,
+    this.paidMarkedAt,
   });
 
   factory ExpenseSplitModel.fromJson(Map<String, dynamic> json) {
@@ -22,6 +26,8 @@ class ExpenseSplitModel {
       amountOwed: double.tryParse(json['amount_owed']?.toString() ?? '0') ?? 0.0,
       isSettled: json['is_settled'] ?? false,
       settledAt: json['settled_at'] != null ? DateTime.tryParse(json['settled_at'].toString()) : null,
+      pendingVerification: json['pending_verification'] ?? false,
+      paidMarkedAt: json['paid_marked_at'] != null ? DateTime.tryParse(json['paid_marked_at'].toString()) : null,
     );
   }
 }
