@@ -261,6 +261,44 @@ class ExpenseViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> removeFriend(int userId) async {
+    _isSubmitting = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await repository.removeFriend(userId);
+    _isSubmitting = false;
+
+    if (result.isSuccess) {
+      _successMessage = 'ลบเพื่อนเรียบร้อยแล้ว';
+      await loadData();
+      return true;
+    } else {
+      _errorMessage = result.errorOrNull?.toString().replaceAll('Exception: ', '') ?? 'ไม่สามารถลบเพื่อนได้';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> cancelFriendRequest(int requestId) async {
+    _isSubmitting = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await repository.cancelFriendRequest(requestId);
+    _isSubmitting = false;
+
+    if (result.isSuccess) {
+      _successMessage = 'ยกเลิกคำขอเป็นเพื่อนเรียบร้อยแล้ว';
+      await loadData();
+      return true;
+    } else {
+      _errorMessage = result.errorOrNull?.toString().replaceAll('Exception: ', '') ?? 'ไม่สามารถยกเลิกคำขอได้';
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<bool> markSplitPaid(int splitId) async {
     _isSubmitting = true;
     _errorMessage = null;

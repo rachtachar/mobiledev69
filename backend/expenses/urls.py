@@ -10,6 +10,8 @@ from .views import (
     FriendListView,
     FriendRequestListView,
     FriendRequestRespondView,
+    RemoveFriendView,
+    FriendRequestDeleteView,
     MarkSplitPaidView,
     VerifySplitPaymentView,
 )
@@ -25,7 +27,9 @@ urlpatterns = [
     path('summary/', BalanceSummaryView.as_view(), name='balance-summary'),
     path('settle/', SettleDebtView.as_view(), name='settle-debt'),
     path('friends/', FriendListView.as_view(), name='friend-list'),
+    path('friends/<int:pk>/', RemoveFriendView.as_view(), name='friend-remove'),
     path('friends/requests/', FriendRequestListView.as_view(), name='friend-requests'),
+    path('friends/requests/<int:pk>/', FriendRequestDeleteView.as_view(), name='friend-request-delete'),
     path('friends/requests/<int:pk>/respond/', FriendRequestRespondView.as_view(), name='friend-respond'),
     path('splits/<int:pk>/mark-paid/', MarkSplitPaidView.as_view(), name='split-mark-paid'),
     path('splits/<int:pk>/verify/', VerifySplitPaymentView.as_view(), name='split-verify'),

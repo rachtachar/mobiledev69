@@ -137,5 +137,36 @@ class FriendRequestTests(TestCase):
         bal_resp = self.client.get('/api/summary/')
         self.assertEqual(bal_resp.data['total_owed_to_you'], 0.0)
 
+    def test_remove_friend_and_cancel_request(self):
+        # Create accepted friend relationship between user1 and user2
+        FriendRequest.objects.create(from_user=self.user1, to_user=self.user2, status='accepted')
+        self.client.force_authenticate(user=self.user1)
+
+        # Check friends list
+        resp = self.client.get('/api/friends/')
+        self.assertEqual(len(resp.data), 1)
+
+        # user1 deletes user2 from friends
+        del_resp = self.client.delete(f'/api/friends/{self.user2.id}/')
+        self.assertEqual(del_resp.status_code, status.HTTP_200_OK)
+
+        # Friends list should now be empty
+        resp2 = self.client.get('/api/friends/')
+        self.assertEqual(len(resp2.data), 0)
+
+        # user1 sends request to user2 again
+        send_resp = self.client.post('/api/friends/requests/', {'username': self.user2.username})
+        self.assertEqual(send_resp.status_code, status.HTTP_201_CREATED)
+        req_id = send_resp.data['request']['id']
+
+        # user1 cancels the outgoing request
+        cancel_resp = self.client.delete(f'/api/friends/requests/{req_id}/')
+        self.assertEqual(cancel_resp.status_code, status.HTTP_200_OK)
+
+        # Check pending outgoing requests is empty
+        req_list = self.client.get('/api/friends/requests/')
+        self.assertEqual(len(req_list.data['outgoing']), 0)
+
+
 
 

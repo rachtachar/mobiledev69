@@ -142,6 +142,14 @@ class ExpenseApiService {
     return response.data as Map<String, dynamic>;
   }
 
+  Future<void> removeFriend(int userId) async {
+    await apiClient.delete('/api/friends/$userId/');
+  }
+
+  Future<void> cancelFriendRequest(int requestId) async {
+    await apiClient.delete('/api/friends/requests/$requestId/');
+  }
+
   Future<void> markSplitPaid(int splitId) async {
     await apiClient.post('/api/splits/$splitId/mark-paid/');
   }

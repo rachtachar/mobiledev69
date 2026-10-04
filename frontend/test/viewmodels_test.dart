@@ -214,6 +214,16 @@ class FakeExpenseRepository implements ExpenseRepository {
   }
 
   @override
+  Future<Result<void>> removeFriend(int userId) async {
+    return const Success(null);
+  }
+
+  @override
+  Future<Result<void>> cancelFriendRequest(int requestId) async {
+    return const Success(null);
+  }
+
+  @override
   Future<Result<void>> markSplitPaid(int splitId) async {
     return const Success(null);
   }
@@ -340,6 +350,14 @@ void main() {
       // Respond reject
       final rejectOk = await vm.respondFriendRequest(requestId: 10, accept: false);
       expect(rejectOk, isTrue);
+
+      // Cancel outgoing request
+      final cancelOk = await vm.cancelFriendRequest(10);
+      expect(cancelOk, isTrue);
+
+      // Remove friend
+      final removeOk = await vm.removeFriend(1);
+      expect(removeOk, isTrue);
     });
   });
 }

@@ -48,6 +48,99 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
   }
 
+  void _confirmRemoveFriend(dynamic friend) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.person_remove, color: AppTheme.accentRed),
+            const SizedBox(width: 8),
+            Text('ลบเพื่อน (${friend.displayName})'),
+          ],
+        ),
+        content: Text(
+          'คุณแน่ใจหรือไม่ว่าต้องการลบ @${friend.username} ออกจากรายชื่อเพื่อน?\n\n'
+          'เมื่อลบแล้ว จะไม่สามารถเลือกเพื่อนคนนี้ในบิลใหม่ได้ จนกว่าจะส่งคำขอเป็นเพื่อนกันใหม่อีกครั้ง',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('ยกเลิก'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final vm = context.read<ExpenseViewModel>();
+              final messenger = ScaffoldMessenger.of(context);
+              final ok = await vm.removeFriend(friend.id as int);
+              if (!mounted) return;
+              if (ok) {
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('ลบ @${friend.username} ออกจากเพื่อนเรียบร้อยแล้ว'),
+                    backgroundColor: AppTheme.accentGreen,
+                  ),
+                );
+              } else {
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(vm.errorMessage ?? 'ไม่สามารถลบเพื่อนได้'),
+                    backgroundColor: AppTheme.accentRed,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentRed),
+            child: const Text('ลบเพื่อน'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmCancelRequest(dynamic req) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('ยกเลิกคำขอเป็นเพื่อน'),
+        content: Text('ต้องการยกเลิกคำขอเป็นเพื่อนที่ส่งไปยัง @${req.toUser.username} หรือไม่?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('ปิด'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final vm = context.read<ExpenseViewModel>();
+              final messenger = ScaffoldMessenger.of(context);
+              final ok = await vm.cancelFriendRequest(req.id as int);
+              if (!mounted) return;
+              if (ok) {
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('ยกเลิกคำขอเรียบร้อยแล้ว'),
+                    backgroundColor: AppTheme.accentGreen,
+                  ),
+                );
+              } else {
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(vm.errorMessage ?? 'ไม่สามารถยกเลิกคำขอได้'),
+                    backgroundColor: AppTheme.accentRed,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentRed),
+            child: const Text('ยกเลิกคำขอ'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<ExpenseViewModel>();
@@ -282,16 +375,27 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       ),
                       title: Text(req.toUser.displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: Text('@${req.toUser.username}'),
-                      trailing: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          'รอตอบรับ',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange),
-                        ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              'รอตอบรับ',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                            tooltip: 'ยกเลิกคำขอ',
+                            onPressed: () => _confirmCancelRequest(req),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -357,7 +461,18 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text('@${friend.username} • ${friend.email}'),
-                      trailing: const Icon(Icons.check_circle, color: AppTheme.accentGreen, size: 20),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.check_circle, color: AppTheme.accentGreen, size: 18),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.person_remove_outlined, color: AppTheme.accentRed, size: 20),
+                            tooltip: 'ลบเพื่อน',
+                            onPressed: () => _confirmRemoveFriend(friend),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }),

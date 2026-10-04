@@ -344,6 +344,50 @@ class FriendRequestRespondView(APIView):
             })
 
 
+class RemoveFriendView(APIView):
+    """
+    Remove an accepted friend relationship between the current user and target user.
+    Endpoint: DELETE /api/friends/<int:pk>/
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, pk):
+        target_user = User.objects.filter(pk=pk, is_active=True).first()
+        if not target_user:
+            return Response({'error': 'ไม่พบบัญชีผู้ใช้'}, status=status.HTTP_404_NOT_FOUND)
+
+        friendship = FriendRequest.objects.filter(
+            (Q(from_user=request.user, to_user=target_user) | Q(from_user=target_user, to_user=request.user)),
+            status='accepted'
+        )
+        if not friendship.exists():
+            return Response({'error': f'คุณและ {target_user.username} ไม่ได้เป็นเพื่อนกัน'}, status=status.HTTP_400_BAD_REQUEST)
+
+        friendship.delete()
+        return Response({
+            'message': f'ลบ {target_user.username} ออกจากเพื่อนเรียบร้อยแล้ว'
+        }, status=status.HTTP_200_OK)
+
+
+class FriendRequestDeleteView(APIView):
+    """
+    Cancel an outgoing friend request or delete a request by ID.
+    Endpoint: DELETE /api/friends/requests/<int:pk>/
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, pk):
+        req_obj = FriendRequest.objects.filter(
+            Q(from_user=request.user) | Q(to_user=request.user),
+            pk=pk
+        ).first()
+        if not req_obj:
+            return Response({'error': 'ไม่พบคำขอเป็นเพื่อน'}, status=status.HTTP_404_NOT_FOUND)
+
+        req_obj.delete()
+        return Response({'message': 'ยกเลิกคำขอเรียบร้อยแล้ว'}, status=status.HTTP_200_OK)
+
+
 class MarkSplitPaidView(APIView):
     """
     Debtor notifies the payer that they have paid their split.

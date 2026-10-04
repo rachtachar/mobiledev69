@@ -30,6 +30,8 @@ abstract class ExpenseRepository {
   Future<Result<Map<String, List<FriendRequestModel>>>> getFriendRequests();
   Future<Result<Map<String, dynamic>>> sendFriendRequest(String username);
   Future<Result<Map<String, dynamic>>> respondFriendRequest({required int requestId, required String action});
+  Future<Result<void>> removeFriend(int userId);
+  Future<Result<void>> cancelFriendRequest(int requestId);
   Future<Result<void>> markSplitPaid(int splitId);
   Future<Result<void>> verifySplitPayment({required int splitId, required String action});
 }
@@ -208,6 +210,30 @@ class ExpenseRepositoryRemote implements ExpenseRepository {
         action: action,
       );
       return Success(res);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
+
+  @override
+  Future<Result<void>> removeFriend(int userId) async {
+    try {
+      await apiService.removeFriend(userId);
+      return const Success(null);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
+
+  @override
+  Future<Result<void>> cancelFriendRequest(int requestId) async {
+    try {
+      await apiService.cancelFriendRequest(requestId);
+      return const Success(null);
     } on Exception catch (e, st) {
       return Failure(e, st);
     } catch (e, st) {
