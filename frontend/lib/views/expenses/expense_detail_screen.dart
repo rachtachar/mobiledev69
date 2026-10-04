@@ -256,13 +256,15 @@ class ExpenseDetailScreen extends StatelessWidget {
                 statusColor = AppTheme.accentRed;
               }
 
+              final cardBorderColor = split.isSettled
+                  ? AppTheme.accentGreen.withValues(alpha: 0.3)
+                  : (split.pendingVerification ? Colors.orange.shade400 : AppTheme.accentRed.withValues(alpha: 0.35));
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: split.pendingVerification
-                      ? BorderSide(color: Colors.orange.shade400, width: 1.5)
-                      : BorderSide.none,
+                  side: BorderSide(color: cardBorderColor, width: 1.2),
                 ),
                 child: ListTile(
                   leading: CircleAvatar(
@@ -282,14 +284,28 @@ class ExpenseDetailScreen extends StatelessWidget {
                       fontWeight: (isPayer || isMe) ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
-                  subtitle: Text(
-                    statusText,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: statusColor,
-                      fontWeight: (split.isSettled || split.pendingVerification)
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: statusColor.withValues(alpha: 0.35)),
+                          ),
+                          child: Text(
+                            statusText,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: statusColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   trailing: Row(

@@ -22,6 +22,20 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   String _creatorFilter = 'all'; // 'all', 'mine', 'others'
+  String _statusFilter = 'all'; // 'all', 'unsettled', 'settled'
+
+  bool _isExpenseSettled(ExpenseModel expense, UserModel? user) {
+    if (user == null) return false;
+    final isMine = expense.payer.id == user.id || expense.payer.username == user.username;
+    if (isMine) {
+      final friendSplits = expense.splits.where((s) => s.user.id != expense.payer.id);
+      if (friendSplits.isEmpty) return true;
+      return friendSplits.every((s) => s.isSettled);
+    } else {
+      final mySplit = expense.splits.where((s) => s.user.id == user.id || s.user.username == user.username).firstOrNull;
+      return mySplit?.isSettled ?? false;
+    }
+  }
 
   @override
   void initState() {
@@ -40,11 +54,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final myExpensesCount = expenseVm.expenses.where((e) => user != null && (e.payer.id == user.id || e.payer.username == user.username)).length;
     final othersExpensesCount = expenseVm.expenses.where((e) => user == null || (e.payer.id != user.id && e.payer.username != user.username)).length;
+    final unsettledCount = expenseVm.expenses.where((e) => !_isExpenseSettled(e, user)).length;
+    final settledCount = expenseVm.expenses.where((e) => _isExpenseSettled(e, user)).length;
 
     final displayedExpenses = expenseVm.expenses.where((e) {
       final isMine = user != null && (e.payer.id == user.id || e.payer.username == user.username);
-      if (_creatorFilter == 'mine') return isMine;
-      if (_creatorFilter == 'others') return !isMine;
+      if (_creatorFilter == 'mine' && !isMine) return false;
+      if (_creatorFilter == 'others' && isMine) return false;
+
+      final isSettled = _isExpenseSettled(e, user);
+      if (_statusFilter == 'unsettled' && isSettled) return false;
+      if (_statusFilter == 'settled' && !isSettled) return false;
+
       return true;
     }).toList();
 
@@ -187,6 +208,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       isSelected: _creatorFilter == 'others',
                       onTap: () => setState(() => _creatorFilter = 'others'),
                       activeColor: Colors.orange.shade700,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Payment Status Filter Tabs (จ่ายแล้ว vs ยังไม่จ่าย)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildCreatorTab(
+                      label: 'สถานะ: ทั้งหมด',
+                      count: expenseVm.expenses.length,
+                      isSelected: _statusFilter == 'all',
+                      onTap: () => setState(() => _statusFilter = 'all'),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildCreatorTab(
+                      label: 'ยังไม่จ่าย ❌',
+                      count: unsettledCount,
+                      isSelected: _statusFilter == 'unsettled',
+                      onTap: () => setState(() => _statusFilter = 'unsettled'),
+                      activeColor: AppTheme.accentRed,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildCreatorTab(
+                      label: 'จ่ายแล้ว ✔️',
+                      count: settledCount,
+                      isSelected: _statusFilter == 'settled',
+                      onTap: () => setState(() => _statusFilter = 'settled'),
+                      activeColor: AppTheme.accentGreen,
                     ),
                   ],
                 ),
@@ -481,6 +534,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
 
+    final friendSplits = expense.splits.where((s) => s.user.id != expense.payer.id).toList();
+    final unsettledSplits = friendSplits.where((s) => !s.isSettled).toList();
+    final hasPendingVerification = isMine
+        ? friendSplits.any((s) => s.pendingVerification)
+        : (mySplit?.pendingVerification ?? false);
+
+    final bool isSettled = isMine
+        ? (friendSplits.isEmpty || unsettledSplits.isEmpty)
+        : (mySplit?.isSettled ?? false);
+
     String formattedDate;
     try {
       formattedDate = DateFormat('dd MMM, HH:mm', 'th_TH').format(expense.createdAt);
@@ -488,15 +551,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
       formattedDate = DateFormat('dd MMM, HH:mm').format(expense.createdAt);
     }
 
-    final cardBorderColor = isMine
+    // Status Badge & Border Colors
+    final Color cardBorderColor = isSettled
         ? AppTheme.accentGreen.withValues(alpha: 0.4)
-        : Colors.orange.withValues(alpha: 0.4);
+        : (hasPendingVerification ? Colors.orange.shade400 : AppTheme.accentRed.withValues(alpha: 0.5));
+
+    final Color statusColor = isSettled
+        ? AppTheme.accentGreen
+        : (hasPendingVerification ? Colors.deepOrange : AppTheme.accentRed);
+
+    final String statusLabel = isSettled
+        ? (isMine ? 'รับเงินครบแล้ว ✔️' : 'คุณจ่ายแล้ว ✔️')
+        : (hasPendingVerification
+            ? (isMine ? 'รอตรวจเงิน ⏳' : 'รอเจ้าของตรวจ ⏳')
+            : (isMine ? 'รอเพื่อนจ่าย ❌' : 'ยังไม่จ่าย ❌'));
+
+    final IconData statusIcon = isSettled
+        ? Icons.check_circle
+        : (hasPendingVerification ? Icons.hourglass_top : Icons.cancel);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: cardBorderColor, width: 1.2),
+        side: BorderSide(color: cardBorderColor, width: 1.5),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -512,7 +590,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Creator Badge
+              // Top Row: Creator Badge on Left & Prominent Status Badge on Right
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -549,48 +627,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                   ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (isMine && expense.splits.any((s) => s.pendingVerification))
-                        Container(
-                          margin: const EdgeInsets.only(right: 6),
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade100,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.hourglass_top, color: Colors.orange, size: 11),
-                              SizedBox(width: 2),
-                              Text('รอตรวจ', style: TextStyle(fontSize: 10, color: Colors.deepOrange, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        )
-                      else if (!isMine && (mySplit?.pendingVerification ?? false))
-                        Container(
-                          margin: const EdgeInsets.only(right: 6),
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade100,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.hourglass_bottom, color: Colors.blue, size: 11),
-                              SizedBox(width: 2),
-                              Text('รอเจ้าของตรวจ', style: TextStyle(fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold)),
-                            ],
+
+                  // Prominent Status Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: statusColor.withValues(alpha: 0.4), width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(statusIcon, size: 12, color: statusColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          statusLabel,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: statusColor,
                           ),
                         ),
-                      Text(
-                        formattedDate,
-                        style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -623,22 +683,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        if (isMine)
-                          Text(
-                            expense.splits.length > 1
-                                ? 'คุณออกให้เพื่อน ${expense.splits.length - 1} คน'
-                                : 'คุณออกเองทั้งหมด',
-                            style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                          )
-                        else
-                          Text(
-                            'ส่วนที่คุณต้องแชร์: ฿ ${(mySplit?.amountOwed ?? 0).toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.accentRed,
+                        if (isMine) ...[
+                          if (isSettled)
+                            const Text(
+                              '🎉 เพื่อนชำระเงินครบแล้วทุกคน',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.accentGreen),
+                            )
+                          else if (hasPendingVerification)
+                            Text(
+                              '⏳ มีเพื่อนแจ้งโอนแล้ว รอคุณตรวจสอบ (${unsettledSplits.where((s) => s.pendingVerification).length} คน)',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.deepOrange),
+                            )
+                          else
+                            Text(
+                              'เพื่อนยังค้าง: ฿${unsettledSplits.fold(0.0, (sum, s) => sum + s.amountOwed).toStringAsFixed(2)} (${unsettledSplits.length} คน)',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.accentRed),
                             ),
-                          ),
+                        ] else ...[
+                          if (isSettled)
+                            Text(
+                              'ส่วนของคุณ: ฿${(mySplit?.amountOwed ?? 0).toStringAsFixed(2)} (จ่ายแล้ว ✔️)',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.accentGreen),
+                            )
+                          else if (hasPendingVerification)
+                            Text(
+                              'ส่วนของคุณ: ฿${(mySplit?.amountOwed ?? 0).toStringAsFixed(2)} (แจ้งโอนแล้ว รอตรวจ ⏳)',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.deepOrange),
+                            )
+                          else
+                            Text(
+                              'ส่วนที่คุณต้องจ่าย: ฿${(mySplit?.amountOwed ?? 0).toStringAsFixed(2)} ❌',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.accentRed),
+                            ),
+                        ],
                       ],
                     ),
                   ),
@@ -656,8 +733,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${expense.splits.length} คนหาร',
-                        style: const TextStyle(fontSize: 11, color: AppTheme.primaryColor),
+                        formattedDate,
+                        style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
                       ),
                     ],
                   ),
