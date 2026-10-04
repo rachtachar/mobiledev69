@@ -32,13 +32,15 @@ class Command(BaseCommand):
                 'name': 'SplitSquad Flutter App',
                 'client_type': 'public',
                 'jwt_alg': 'RS256',
-                'require_consent': True,
+                'require_consent': False,
                 'reuse_consent': True,
                 'redirect_uris': redirect_uris,
             }
         )
         client.redirect_uris = redirect_uris
         client.client_type = 'public'
+        client.require_consent = False
+        client.reuse_consent = True
         client.save()
 
         code_rt = ResponseType.objects.filter(value='code').first()

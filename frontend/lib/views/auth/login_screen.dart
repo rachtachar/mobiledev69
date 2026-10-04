@@ -51,10 +51,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _quickFill(String username, String password) {
+  void _fillUsername(String username) {
     _usernameController.text = username;
-    _passwordController.text = password;
-    _formKey.currentState?.validate();
   }
 
   @override
@@ -238,9 +236,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Quick test users
+                  // Dev usernames hint
                   const Text(
-                    '⚡ เลือกบัญชีทดสอบด่วน (Quick Presets):',
+                    '⚡ รายชื่อบัญชีทดสอบในระบบ (ไม่ Hard-code รหัสผ่าน):',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
@@ -249,34 +247,42 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
                     children: [
                       ActionChip(
-                        label: const Text('Alice'),
+                        label: const Text('alice'),
                         avatar: const CircleAvatar(
                           backgroundColor: Colors.pinkAccent,
                           child: Text('A', style: TextStyle(color: Colors.white, fontSize: 11)),
                         ),
-                        onPressed: () => _quickFill('alice', 'alice123'),
+                        onPressed: () => _fillUsername('alice'),
                       ),
-                      const SizedBox(width: 8),
                       ActionChip(
-                        label: const Text('Bob'),
+                        label: const Text('bob'),
                         avatar: const CircleAvatar(
                           backgroundColor: Colors.blueAccent,
                           child: Text('B', style: TextStyle(color: Colors.white, fontSize: 11)),
                         ),
-                        onPressed: () => _quickFill('bob', 'bob123'),
+                        onPressed: () => _fillUsername('bob'),
                       ),
-                      const SizedBox(width: 8),
                       ActionChip(
-                        label: const Text('Admin'),
+                        label: const Text('somchai'),
                         avatar: const CircleAvatar(
-                          backgroundColor: Colors.teal,
+                          backgroundColor: Colors.orangeAccent,
                           child: Text('S', style: TextStyle(color: Colors.white, fontSize: 11)),
                         ),
-                        onPressed: () => _quickFill('admin', 'admin123'),
+                        onPressed: () => _fillUsername('somchai'),
+                      ),
+                      ActionChip(
+                        label: const Text('admin'),
+                        avatar: const CircleAvatar(
+                          backgroundColor: Colors.teal,
+                          child: Text('M', style: TextStyle(color: Colors.white, fontSize: 11)),
+                        ),
+                        onPressed: () => _fillUsername('admin'),
                       ),
                     ],
                   ),
