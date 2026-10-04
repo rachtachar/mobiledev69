@@ -87,3 +87,28 @@ class FriendRequestTests(TestCase):
         resp3 = self.client.get('/api/expenses/')
         self.assertEqual(len(resp3.data), 0)
 
+    def test_settle_multiple_bills_fifo(self):
+        from expenses.models import Expense, ExpenseSplit
+        exp1 = Expense.objects.create(title='Bill 1', amount=200, payer=self.user1)
+        ExpenseSplit.objects.create(expense=exp1, user=self.user1, amount_owed=100, is_settled=True)
+        split1 = ExpenseSplit.objects.create(expense=exp1, user=self.user2, amount_owed=100, is_settled=False)
+
+        exp2 = Expense.objects.create(title='Bill 2', amount=200, payer=self.user1)
+        ExpenseSplit.objects.create(expense=exp2, user=self.user1, amount_owed=100, is_settled=True)
+        split2 = ExpenseSplit.objects.create(expense=exp2, user=self.user2, amount_owed=100, is_settled=False)
+
+        # user1 records receiving 100 from user2
+        self.client.force_authenticate(user=self.user1)
+        resp = self.client.post('/api/settle/', {'debtor_id': self.user2.id, 'amount': 100})
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        split1.refresh_from_db()
+        split2.refresh_from_db()
+        self.assertTrue(split1.is_settled, "Bill 1 should be settled")
+        self.assertFalse(split2.is_settled, "Bill 2 should remain unsettled")
+
+        # Check balance
+        bal_resp = self.client.get('/api/summary/')
+        self.assertEqual(bal_resp.data['total_owed_to_you'], 100.0)
+
+

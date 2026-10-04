@@ -260,36 +260,121 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _confirmSettlePay(BuildContext context, int creditorId, String name, double amount) {
+  void _confirmSettlePay(BuildContext context, int creditorId, String name, double totalAmount) {
+    final amountController = TextEditingController(text: totalAmount.toStringAsFixed(2));
+    final formKey = GlobalKey<FormState>();
+
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: const Text('บันทึกการโอนเงินคืน (Settle Debt)'),
-        content: Text('คุณต้องการบันทึกว่าได้โอนเงินคืน ฿${amount.toStringAsFixed(2)} ให้กับ "$name" เรียบร้อยแล้วใช่หรือไม่? ระบบจะตัดยอดหนี้ให้ทันที'),
+        title: const Row(
+          children: [
+            Icon(Icons.payment, color: AppTheme.accentRed),
+            SizedBox(width: 8),
+            Text('โอนเงินคืนเพื่อน', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'ระบุยอดเงินที่คุณโอนคืนให้ "$name" (ยอดหนี้รวม ฿${totalAmount.toStringAsFixed(2)})',
+                style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: amountController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'จำนวนเงินที่โอนคืน (฿)',
+                  prefixIcon: Icon(Icons.attach_money),
+                ),
+                validator: (val) {
+                  final v = double.tryParse(val ?? '');
+                  if (v == null || v <= 0) return 'กรุณาระบุจำนวนเงินที่ถูกต้อง';
+                  if (v > totalAmount + 0.01) return 'ยอดเงินเกินยอดหนี้ทั้งหมด (฿${totalAmount.toStringAsFixed(2)})';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                '💡 หากโอนคืนบางส่วน ระบบจะนำไปตัดบิลเก่าก่อนตามลำดับ (FIFO)',
+                style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+              ),
+            ],
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
             child: const Text('ยกเลิก'),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
             onPressed: () async {
+              if (!formKey.currentState!.validate()) return;
+              final enteredAmount = double.parse(amountController.text.trim());
               Navigator.of(dialogCtx).pop();
               final vm = context.read<ExpenseViewModel>();
-              await vm.settleDebt(creditorId: creditorId, amount: amount);
+              await vm.settleDebt(creditorId: creditorId, amount: enteredAmount);
             },
-            child: const Text('ยืนยันโอนเงินคืน'),
+            child: const Text('ยืนยันโอนเงิน'),
           ),
         ],
       ),
     );
   }
 
-  void _confirmSettleReceive(BuildContext context, int debtorId, String name, double amount) {
+  void _confirmSettleReceive(BuildContext context, int debtorId, String name, double totalAmount) {
+    final amountController = TextEditingController(text: totalAmount.toStringAsFixed(2));
+    final formKey = GlobalKey<FormState>();
+
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: const Text('บันทึกได้รับเงินคืนแล้ว (Mark as Received)'),
-        content: Text('คุณได้รับเงินคืนจำนวน ฿${amount.toStringAsFixed(2)} จาก "$name" เรียบร้อยแล้วใช่หรือไม่? ระบบจะตัดยอดหนี้ให้ทันที'),
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: AppTheme.accentGreen),
+            SizedBox(width: 8),
+            Text('ได้รับเงินคืนแล้ว', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'ระบุยอดเงินที่ได้รับคืนจาก "$name" (ยอดหนี้รวม ฿${totalAmount.toStringAsFixed(2)})',
+                style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: amountController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'จำนวนเงินที่ได้รับ (฿)',
+                  prefixIcon: Icon(Icons.attach_money),
+                ),
+                validator: (val) {
+                  final v = double.tryParse(val ?? '');
+                  if (v == null || v <= 0) return 'กรุณาระบุจำนวนเงินที่ถูกต้อง';
+                  if (v > totalAmount + 0.01) return 'ยอดเงินเกินยอดหนี้ทั้งหมด (฿${totalAmount.toStringAsFixed(2)})';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                '💡 หากเพื่อนคืนเพียงบางส่วน ระบบจะนำไปตัดบิลเก่าก่อนตามลำดับ (FIFO)',
+                style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+              ),
+            ],
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
@@ -298,11 +383,13 @@ class ProfileScreen extends StatelessWidget {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentGreen),
             onPressed: () async {
+              if (!formKey.currentState!.validate()) return;
+              final enteredAmount = double.parse(amountController.text.trim());
               Navigator.of(dialogCtx).pop();
               final vm = context.read<ExpenseViewModel>();
-              await vm.settleDebt(debtorId: debtorId, amount: amount);
+              await vm.settleDebt(debtorId: debtorId, amount: enteredAmount);
             },
-            child: const Text('ยืนยันได้รับเงินแล้ว'),
+            child: const Text('ยืนยันได้รับเงิน'),
           ),
         ],
       ),

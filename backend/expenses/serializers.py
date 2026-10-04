@@ -155,9 +155,18 @@ class SettlementSerializer(serializers.ModelSerializer):
                 split.save()
                 remaining -= split.amount_owed
             else:
-                split.is_settled = True
-                split.settled_at = timezone.now()
+                # Partial settlement: split the record into settled portion and remaining unpaid portion
+                partially_settled = remaining
+                split.amount_owed -= partially_settled
                 split.save()
+                ExpenseSplit.objects.create(
+                    expense=split.expense,
+                    user=split.user,
+                    amount_owed=partially_settled,
+                    is_settled=True,
+                    settled_at=timezone.now()
+                )
+                remaining = Decimal('0.00')
                 break
 
         return settlement

@@ -16,17 +16,23 @@ class ExpenseDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authVm = context.watch<AuthViewModel>();
+    final expenseVm = context.watch<ExpenseViewModel>();
+    final currentExpense = expenseVm.expenses.firstWhere(
+      (e) => e.id == expense.id,
+      orElse: () => expense,
+    );
+
     final currentUser = authVm.currentUser;
     final isMine = currentUser != null &&
-        (expense.payer.id == currentUser.id || expense.payer.username == currentUser.username);
+        (currentExpense.payer.id == currentUser.id || currentExpense.payer.username == currentUser.username);
 
-    final catInfo = AppConstants.categories[expense.category] ??
+    final catInfo = AppConstants.categories[currentExpense.category] ??
         AppConstants.categories['other']!;
     String formattedDate;
     try {
-      formattedDate = DateFormat('dd MMM yyyy, HH:mm น.', 'th_TH').format(expense.createdAt);
+      formattedDate = DateFormat('dd MMM yyyy, HH:mm น.', 'th_TH').format(currentExpense.createdAt);
     } catch (_) {
-      formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(expense.createdAt);
+      formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(currentExpense.createdAt);
     }
 
     return Scaffold(
@@ -40,7 +46,7 @@ class ExpenseDetailScreen extends StatelessWidget {
               onPressed: () async {
                 await Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => AddExpenseScreen(expenseToEdit: expense),
+                    builder: (_) => AddExpenseScreen(expenseToEdit: currentExpense),
                   ),
                 );
                 if (context.mounted) {
@@ -51,7 +57,7 @@ class ExpenseDetailScreen extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.delete_outline, color: AppTheme.accentRed),
               tooltip: 'ลบบิลนี้',
-              onPressed: () => _confirmDelete(context),
+              onPressed: () => _confirmDelete(context, currentExpense.id, currentExpense.title),
             ),
           ],
         ],
@@ -88,7 +94,7 @@ class ExpenseDetailScreen extends StatelessWidget {
                     child: Text(
                       isMine
                           ? '🙋‍♂️ คุณเป็นคนสร้างและจ่ายบิลนี้ (มีสิทธิ์แก้ไขและลบ)'
-                          : '👥 บิลนี้สร้างโดย ${expense.payer.displayName} (คุณร่วมหาร)',
+                          : '👥 บิลนี้สร้างโดย ${currentExpense.payer.displayName} (คุณร่วมหาร)',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -115,7 +121,7 @@ class ExpenseDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      expense.title,
+                      currentExpense.title,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 22,
@@ -132,7 +138,7 @@ class ExpenseDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '฿ ${expense.amount.toStringAsFixed(2)}',
+                      '฿ ${currentExpense.amount.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.w900,
@@ -146,7 +152,7 @@ class ExpenseDetailScreen extends StatelessWidget {
                         const Icon(Icons.person, size: 16, color: AppTheme.textMuted),
                         const SizedBox(width: 4),
                         Text(
-                          'จ่ายโดย: ${expense.payer.displayName}',
+                          'จ่ายโดย: ${currentExpense.payer.displayName}',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -160,10 +166,10 @@ class ExpenseDetailScreen extends StatelessWidget {
                       formattedDate,
                       style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
                     ),
-                    if (expense.notes.isNotEmpty) ...[
+                    if (currentExpense.notes.isNotEmpty) ...[
                       const Divider(height: 24),
                       Text(
-                        '📝 ${expense.notes}',
+                        '📝 ${currentExpense.notes}',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 13,
@@ -190,8 +196,13 @@ class ExpenseDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            ...expense.splits.map((split) {
-              final isPayer = split.user.id == expense.payer.id;
+            ...currentExpense.splits.map((split) {
+              final isPayer = split.user.id == currentExpense.payer.id;
+              final isMe = currentUser != null &&
+                  (split.user.id == currentUser.id || split.user.username == currentUser.username);
+              final canMarkReceived = isMine && !isPayer && !split.isSettled;
+              final canMarkPaid = !isMine && isMe && !split.isSettled;
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
@@ -205,25 +216,58 @@ class ExpenseDetailScreen extends StatelessWidget {
                     ),
                   ),
                   title: Text(
-                    split.user.displayName + (isPayer ? ' (คนจ่าย)' : ''),
+                    split.user.displayName + (isPayer ? ' (คนจ่าย)' : (isMe ? ' (คุณ)' : '')),
                     style: TextStyle(
-                      fontWeight: isPayer ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: (isPayer || isMe) ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                   subtitle: Text(
-                    split.isSettled ? 'ชำระเรียบร้อยแล้ว' : 'ยังค้างชำระ',
+                    split.isSettled ? 'ชำระเรียบร้อยแล้ว ✔️' : 'ยังค้างชำระ',
                     style: TextStyle(
                       fontSize: 12,
                       color: split.isSettled ? AppTheme.accentGreen : AppTheme.accentRed,
+                      fontWeight: split.isSettled ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
-                  trailing: Text(
-                    '฿ ${split.amountOwed.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: split.isSettled ? AppTheme.textMuted : AppTheme.textDark,
-                    ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '฿ ${split.amountOwed.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: split.isSettled ? AppTheme.textMuted : AppTheme.textDark,
+                        ),
+                      ),
+                      if (canMarkReceived) ...[
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.check_circle, color: AppTheme.accentGreen),
+                          tooltip: 'ทำเครื่องหมายว่าได้รับเงินคืนจาก ${split.user.displayName} แล้ว',
+                          onPressed: () => _confirmSettleSplit(
+                            context,
+                            debtorId: split.user.id,
+                            name: split.user.displayName,
+                            amount: split.amountOwed,
+                            isReceive: true,
+                          ),
+                        ),
+                      ] else if (canMarkPaid) ...[
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.payment, color: AppTheme.accentRed),
+                          tooltip: 'บันทึกว่าโอนคืนบิลนี้แล้ว',
+                          onPressed: () => _confirmSettleSplit(
+                            context,
+                            creditorId: currentExpense.payer.id,
+                            name: currentExpense.payer.displayName,
+                            amount: split.amountOwed,
+                            isReceive: false,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               );
@@ -234,12 +278,78 @@ class ExpenseDetailScreen extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context) {
+  void _confirmSettleSplit(
+    BuildContext context, {
+    int? debtorId,
+    int? creditorId,
+    required String name,
+    required double amount,
+    required bool isReceive,
+  }) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              isReceive ? Icons.check_circle_outline : Icons.payment,
+              color: isReceive ? AppTheme.accentGreen : AppTheme.accentRed,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              isReceive ? 'ได้รับเงินแล้ว' : 'โอนเงินคืนแล้ว',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Text(
+          isReceive
+              ? 'คุณได้รับเงินคืนจำนวน ฿${amount.toStringAsFixed(2)} จาก "$name" สำหรับบิลนี้เรียบร้อยแล้วใช่หรือไม่?'
+              : 'คุณได้โอนเงินคืนจำนวน ฿${amount.toStringAsFixed(2)} ให้กับ "$name" สำหรับบิลนี้เรียบร้อยแล้วใช่หรือไม่?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('ยกเลิก'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isReceive ? AppTheme.accentGreen : AppTheme.primaryColor,
+            ),
+            onPressed: () async {
+              Navigator.of(dialogCtx).pop();
+              final vm = context.read<ExpenseViewModel>();
+              await vm.settleDebt(
+                debtorId: debtorId,
+                creditorId: creditorId,
+                amount: amount,
+              );
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      isReceive
+                          ? 'บันทึกว่าได้รับเงินคืนจาก $name เรียบร้อยแล้ว'
+                          : 'บันทึกการโอนเงินคืน $name เรียบร้อยแล้ว',
+                    ),
+                    backgroundColor: AppTheme.accentGreen,
+                  ),
+                );
+              }
+            },
+            child: const Text('ยืนยัน'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, int expenseId, String expenseTitle) {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
         title: const Text('ยืนยันการลบบิล'),
-        content: Text('คุณต้องการลบ "${expense.title}" ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้'),
+        content: Text('คุณต้องการลบ "$expenseTitle" ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
@@ -250,7 +360,7 @@ class ExpenseDetailScreen extends StatelessWidget {
             onPressed: () async {
               Navigator.of(dialogCtx).pop();
               final vm = context.read<ExpenseViewModel>();
-              final success = await vm.deleteExpense(expense.id);
+              final success = await vm.deleteExpense(expenseId);
               if (context.mounted && success) {
                 Navigator.of(context).pop();
               }
