@@ -226,17 +226,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Row(
                   children: [
                     _buildCreatorTab(
-                      label: 'สถานะ: ทั้งหมด',
-                      count: expenseVm.expenses.length,
-                      isSelected: _statusFilter == 'all',
-                      onTap: () => setState(() => _statusFilter = 'all'),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildCreatorTab(
                       label: 'ทุกคนจ่ายครบ 🎉',
                       count: allSettledCount,
                       isSelected: _statusFilter == 'all_settled',
-                      onTap: () => setState(() => _statusFilter = 'all_settled'),
+                      onTap: () => setState(() => _statusFilter = _statusFilter == 'all_settled' ? 'all' : 'all_settled'),
                       activeColor: Colors.teal.shade700,
                     ),
                     const SizedBox(width: 8),
@@ -244,7 +237,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       label: 'ยังไม่จ่าย ❌',
                       count: unsettledCount,
                       isSelected: _statusFilter == 'unsettled',
-                      onTap: () => setState(() => _statusFilter = 'unsettled'),
+                      onTap: () => setState(() => _statusFilter = _statusFilter == 'unsettled' ? 'all' : 'unsettled'),
                       activeColor: AppTheme.accentRed,
                     ),
                     const SizedBox(width: 8),
@@ -252,7 +245,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       label: 'คุณจ่ายแล้ว ✔️',
                       count: settledCount,
                       isSelected: _statusFilter == 'settled',
-                      onTap: () => setState(() => _statusFilter = 'settled'),
+                      onTap: () => setState(() => _statusFilter = _statusFilter == 'settled' ? 'all' : 'settled'),
                       activeColor: AppTheme.accentGreen,
                     ),
                   ],
