@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from oidc_provider.models import Client, ResponseType, RSAKey
-from expenses.models import Expense, ExpenseSplit, ExpenseCategory
+from expenses.models import Expense, ExpenseSplit, ExpenseCategory, FriendRequest
 
 class Command(BaseCommand):
     help = "Seeds initial development users, OIDC client, and sample group expenses."
@@ -77,6 +77,25 @@ class Command(BaseCommand):
             users_dict[u_info['username']] = user
             status_str = "Created" if u_created else "Updated"
             self.stdout.write(f"{status_str} user: {user.username} (pw: {u_info['pass']})")
+
+        # 3.1 Establish mutual friendships among demo users
+        demo_pairs = [
+            ('admin', 'alice'),
+            ('admin', 'bob'),
+            ('admin', 'somchai'),
+            ('alice', 'bob'),
+            ('alice', 'somchai'),
+            ('bob', 'somchai'),
+        ]
+        for u1, u2 in demo_pairs:
+            user_a = users_dict[u1]
+            user_b = users_dict[u2]
+            FriendRequest.objects.get_or_create(
+                from_user=user_a,
+                to_user=user_b,
+                defaults={'status': 'accepted'}
+            )
+        self.stdout.write(self.style.SUCCESS("Demo friendships established!"))
 
         # 4. Create Sample Expenses if empty
         if not Expense.objects.exists():

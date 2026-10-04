@@ -1,6 +1,15 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import ExpenseViewSet, UserListView, BalanceSummaryView, SettleDebtView, LoginTokenView
+from .views import (
+    ExpenseViewSet,
+    UserListView,
+    BalanceSummaryView,
+    SettleDebtView,
+    LoginTokenView,
+    FriendListView,
+    FriendRequestListView,
+    FriendRequestRespondView,
+)
 
 router = DefaultRouter()
 router.register(r'expenses', ExpenseViewSet, basename='expense')
@@ -11,4 +20,7 @@ urlpatterns = [
     path('users/', UserListView.as_view(), name='user-list'),
     path('summary/', BalanceSummaryView.as_view(), name='balance-summary'),
     path('settle/', SettleDebtView.as_view(), name='settle-debt'),
+    path('friends/', FriendListView.as_view(), name='friend-list'),
+    path('friends/requests/', FriendRequestListView.as_view(), name='friend-requests'),
+    path('friends/requests/<int:pk>/respond/', FriendRequestRespondView.as_view(), name='friend-respond'),
 ]

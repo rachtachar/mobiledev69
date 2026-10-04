@@ -4,6 +4,7 @@ import '../../viewmodels/auth_view_model.dart';
 import '../../viewmodels/expense_view_model.dart';
 import '../../viewmodels/theme_view_model.dart';
 import '../theme/app_theme.dart';
+import 'friends_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -102,6 +103,48 @@ class ProfileScreen extends StatelessWidget {
                 subtitle: Text(themeVm.isDarkMode ? 'เปิดใช้งานธีมมืด' : 'เปิดใช้งานธีมสว่าง'),
                 value: themeVm.isDarkMode,
                 onChanged: (_) => themeVm.toggleTheme(),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Friends Management Tile
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.people_outline, color: AppTheme.primaryColor),
+                title: const Text(
+                  'จัดการเพื่อนและคำขอเป็นเพื่อน',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  expenseVm.incomingRequests.isNotEmpty
+                      ? 'มี ${expenseVm.incomingRequests.length} คำขอรอการตอบรับ'
+                      : 'เพื่อนในกลุ่ม ${expenseVm.friends.length} คน',
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (expenseVm.incomingRequests.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accentRed,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${expenseVm.incomingRequests.length}',
+                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.chevron_right, color: AppTheme.textMuted),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const FriendsScreen()),
+                  );
+                },
               ),
             ),
 

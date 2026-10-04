@@ -8,6 +8,7 @@ import '../../viewmodels/expense_view_model.dart';
 import '../expenses/add_expense_screen.dart';
 import '../expenses/expense_detail_screen.dart';
 import '../profile/profile_screen.dart';
+import '../profile/friends_screen.dart';
 import '../../viewmodels/theme_view_model.dart';
 import '../theme/app_theme.dart';
 
@@ -54,6 +55,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         actions: [
+          // Friend Requests / Friends Management
+          IconButton(
+            tooltip: 'จัดการเพื่อนและคำขอเป็นเพื่อน',
+            icon: Badge(
+              isLabelVisible: expenseVm.incomingRequests.isNotEmpty,
+              label: Text('${expenseVm.incomingRequests.length}'),
+              child: const Icon(Icons.person_add_outlined),
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const FriendsScreen()),
+              );
+            },
+          ),
           IconButton(
             tooltip: context.watch<ThemeViewModel>().isDarkMode ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีมมืด 🌙',
             icon: Icon(

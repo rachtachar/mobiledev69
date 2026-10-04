@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - OpenID Connect Provider{% endblock %}
+
+{% block content %}
+<div class="header">
+    <div class="logo-icon">✨</div>
+    <h1>Create Account</h1>
+    <p class="subtitle">Sign up for your SplitSquad account</p>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">
+    {{ error }}
+</div>
+{% endif %}
+
+<form method="post" action="{% url 'register' %}">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+
+    <div class="form-group">
+        <label for="id_username">Username *</label>
+        <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required id="id_username" placeholder="Choose a username (e.g. david)">
+    </div>
+
+    <div class="form-group">
+        <label for="id_display_name">Display Name (Full Name)</label>
+        <input type="text" name="display_name" maxlength="150" id="id_display_name" placeholder="Your name (e.g. David Miller)">
+    </div>
+
+    <div class="form-group">
+        <label for="id_email">Email (Optional)</label>
+        <input type="email" name="email" id="id_email" placeholder="you@example.com">
+    </div>
+
+    <div class="form-group">
+        <label for="id_password">Password *</label>
+        <input type="password" name="password" autocomplete="new-password" required id="id_password" placeholder="Create password (min 4 characters)">
+    </div>
+
+    <div class="actions">
+        <button type="submit" class="btn btn-primary">Sign Up & Continue</button>
+    </div>
+</form>
+
+<div style="text-align: center; margin-top: 20px; font-size: 0.9rem;">
+    Already have an account? <a href="{% url 'login' %}?next={{ next|urlencode }}" style="color: var(--primary); font-weight: 600;">Sign in here</a>
+</div>
+{% endblock %}

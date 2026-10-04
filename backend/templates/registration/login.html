@@ -34,7 +34,11 @@
     </div>
 </form>
 
-<div style="text-align: center; margin-top: 20px; font-size: 0.85rem;">
+<div style="text-align: center; margin-top: 18px; font-size: 0.9rem;">
+    Don't have an account? <a href="{% url 'register' %}?next={{ next|urlencode }}" style="color: var(--primary); font-weight: 600;">Sign up here</a>
+</div>
+
+<div style="text-align: center; margin-top: 14px; font-size: 0.85rem;">
     <a href="{% url 'index' %}" style="color: var(--text-muted);">← Back to overview</a>
 </div>
 {% endblock %}

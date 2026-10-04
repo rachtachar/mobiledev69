@@ -1,7 +1,7 @@
 from decimal import Decimal
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Expense, ExpenseSplit, Settlement, ExpenseCategory
+from .models import Expense, ExpenseSplit, Settlement, ExpenseCategory, FriendRequest
 
 class UserBasicSerializer(serializers.ModelSerializer):
     display_name = serializers.SerializerMethodField()
@@ -143,3 +143,12 @@ class SettlementSerializer(serializers.ModelSerializer):
                 remaining -= split.amount_owed
 
         return settlement
+
+
+class FriendRequestSerializer(serializers.ModelSerializer):
+    from_user = UserBasicSerializer(read_only=True)
+    to_user = UserBasicSerializer(read_only=True)
+
+    class Meta:
+        model = FriendRequest
+        fields = ['id', 'from_user', 'to_user', 'status', 'created_at', 'updated_at']

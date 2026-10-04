@@ -360,7 +360,6 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   void _showAddFriendDialog(BuildContext context) {
     final usernameCtrl = TextEditingController();
-    final nameCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
     showDialog(
@@ -370,36 +369,32 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           children: [
             Icon(Icons.person_add_alt_1, color: AppTheme.primaryColor),
             SizedBox(width: 8),
-            Text('เพิ่มเพื่อนร่วมกลุ่ม'),
+            Text('ส่งคำขอเพิ่มเพื่อน'),
           ],
         ),
         content: Form(
           key: formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Text(
+                'กรอก Username ของเพื่อน ระบบจะส่งคำขอเพิ่มเพื่อนไปหาผู้ใช้นั้น เมื่อเพื่อนตอบรับแล้วจะสามารถร่วมหารบิลได้',
+                style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+              ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: usernameCtrl,
                 autofocus: true,
                 decoration: const InputDecoration(
                   labelText: 'ชื่อผู้ใช้ (Username) *',
-                  hintText: 'เช่น david, somying',
+                  hintText: 'เช่น alice, bob, somchai',
                   prefixIcon: Icon(Icons.alternate_email),
                 ),
                 validator: (val) {
                   if (val == null || val.trim().isEmpty) return 'กรุณากรอก Username';
-                  if (val.trim().length < 3) return 'ต้องมีอย่างน้อย 3 ตัวอักษร';
                   return null;
                 },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: nameCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'ชื่อที่แสดง (Display Name)',
-                  hintText: 'เช่น David Miller',
-                  prefixIcon: Icon(Icons.badge_outlined),
-                ),
               ),
             ],
           ),
@@ -414,26 +409,27 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               if (!formKey.currentState!.validate()) return;
               final messenger = ScaffoldMessenger.of(context);
               final vm = context.read<ExpenseViewModel>();
-              final user = await vm.addUser(
-                username: usernameCtrl.text.trim(),
-                displayName: nameCtrl.text.trim().isNotEmpty ? nameCtrl.text.trim() : null,
-              );
+              final success = await vm.sendFriendRequest(usernameCtrl.text.trim());
               if (dialogCtx.mounted) {
                 Navigator.of(dialogCtx).pop();
               }
-              if (user != null && mounted) {
-                setState(() {
-                  _selectedMemberIds.add(user.id);
-                });
+              if (success && mounted) {
                 messenger.showSnackBar(
                   SnackBar(
-                    content: Text('เพิ่ม "${user.displayName}" เรียบร้อยแล้ว!'),
+                    content: Text(vm.successMessage ?? 'ส่งคำขอเป็นเพื่อนเรียบร้อยแล้ว'),
                     backgroundColor: AppTheme.accentGreen,
+                  ),
+                );
+              } else if (mounted) {
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(vm.errorMessage ?? 'ไม่สามารถส่งคำขอได้'),
+                    backgroundColor: AppTheme.accentRed,
                   ),
                 );
               }
             },
-            child: const Text('เพิ่มเพื่อน'),
+            child: const Text('ส่งคำขอ'),
           ),
         ],
       ),

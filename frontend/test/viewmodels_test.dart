@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/core/result.dart';
 import 'package:frontend/data/models/expense_model.dart';
 import 'package:frontend/data/models/user_model.dart';
+import 'package:frontend/data/models/friend_request_model.dart';
 import 'package:frontend/data/repositories/auth_repository.dart';
 import 'package:frontend/data/repositories/expense_repository.dart';
 import 'package:frontend/viewmodels/auth_view_model.dart';
@@ -171,6 +172,46 @@ class FakeExpenseRepository implements ExpenseRepository {
   Future<Result<void>> settleDebt({required int creditorId, required double amount}) async {
     return const Success(null);
   }
+
+  @override
+  Future<Result<List<UserModel>>> getFriends() async {
+    return const Success([
+      UserModel(id: 1, username: 'admin', firstName: '', lastName: '', email: '', displayName: 'Admin'),
+    ]);
+  }
+
+  @override
+  Future<Result<Map<String, List<FriendRequestModel>>>> getFriendRequests() async {
+    return Success({
+      'incoming': [
+        FriendRequestModel(
+          id: 10,
+          fromUser: const UserModel(id: 3, username: 'bob', firstName: '', lastName: '', email: '', displayName: 'Bob Smith'),
+          toUser: const UserModel(id: 2, username: 'alice', firstName: '', lastName: '', email: '', displayName: 'Alice Chen'),
+          status: 'pending',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      ],
+      'outgoing': [],
+    });
+  }
+
+  @override
+  Future<Result<Map<String, dynamic>>> sendFriendRequest(String username) async {
+    if (username == 'somchai') {
+      return const Success({'message': 'ส่งคำขอเป็นเพื่อนเรียบร้อยแล้ว', 'is_friend': false});
+    }
+    return Failure(Exception('User not found'));
+  }
+
+  @override
+  Future<Result<Map<String, dynamic>>> respondFriendRequest({required int requestId, required String action}) async {
+    if (action == 'accept') {
+      return const Success({'message': 'ยอมรับคำขอเป็นเพื่อนแล้ว'});
+    }
+    return const Success({'message': 'ปฏิเสธคำขอเป็นเพื่อนแล้ว'});
+  }
 }
 
 void main() {
@@ -267,6 +308,28 @@ void main() {
       expect(user, isNotNull);
       expect(user?.username, equals('david'));
       expect(user?.displayName, equals('David Miller'));
+    });
+
+    test('friend request workflows: send and respond', () async {
+      final fakeRepo = FakeExpenseRepository();
+      final vm = ExpenseViewModel(repository: fakeRepo);
+
+      await vm.loadData();
+      expect(vm.friends.length, equals(1));
+      expect(vm.incomingRequests.length, equals(1));
+      expect(vm.incomingRequests.first.fromUser.username, equals('bob'));
+
+      // Send friend request
+      final sendOk = await vm.sendFriendRequest('somchai');
+      expect(sendOk, isTrue);
+
+      // Respond accept
+      final acceptOk = await vm.respondFriendRequest(requestId: 10, accept: true);
+      expect(acceptOk, isTrue);
+
+      // Respond reject
+      final rejectOk = await vm.respondFriendRequest(requestId: 10, accept: false);
+      expect(rejectOk, isTrue);
     });
   });
 }

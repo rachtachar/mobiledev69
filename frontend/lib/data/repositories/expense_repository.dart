@@ -1,6 +1,7 @@
 import '../../core/result.dart';
 import '../models/expense_model.dart';
 import '../models/user_model.dart';
+import '../models/friend_request_model.dart';
 import '../services/expense_api_service.dart';
 
 abstract class ExpenseRepository {
@@ -25,6 +26,10 @@ abstract class ExpenseRepository {
   Future<Result<List<UserModel>>> getUsers();
   Future<Result<UserModel>> addUser({required String username, String? displayName});
   Future<Result<void>> settleDebt({required int creditorId, required double amount});
+  Future<Result<List<UserModel>>> getFriends();
+  Future<Result<Map<String, List<FriendRequestModel>>>> getFriendRequests();
+  Future<Result<Map<String, dynamic>>> sendFriendRequest(String username);
+  Future<Result<Map<String, dynamic>>> respondFriendRequest({required int requestId, required String action});
 }
 
 class ExpenseRepositoryRemote implements ExpenseRepository {
@@ -153,4 +158,59 @@ class ExpenseRepositoryRemote implements ExpenseRepository {
       return Failure(Exception(e.toString()), st);
     }
   }
+
+  @override
+  Future<Result<List<UserModel>>> getFriends() async {
+    try {
+      final friends = await apiService.getFriends();
+      return Success(friends);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
+
+  @override
+  Future<Result<Map<String, List<FriendRequestModel>>>> getFriendRequests() async {
+    try {
+      final requests = await apiService.getFriendRequests();
+      return Success(requests);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
+
+  @override
+  Future<Result<Map<String, dynamic>>> sendFriendRequest(String username) async {
+    try {
+      final res = await apiService.sendFriendRequest(username);
+      return Success(res);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
+
+  @override
+  Future<Result<Map<String, dynamic>>> respondFriendRequest({
+    required int requestId,
+    required String action,
+  }) async {
+    try {
+      final res = await apiService.respondFriendRequest(
+        requestId: requestId,
+        action: action,
+      );
+      return Success(res);
+    } on Exception catch (e, st) {
+      return Failure(e, st);
+    } catch (e, st) {
+      return Failure(Exception(e.toString()), st);
+    }
+  }
 }
+

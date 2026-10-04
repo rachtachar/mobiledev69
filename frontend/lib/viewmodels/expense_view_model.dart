@@ -1,15 +1,19 @@
 import 'package:flutter/foundation.dart';
 import '../data/models/expense_model.dart';
 import '../data/models/user_model.dart';
+import '../data/models/friend_request_model.dart';
 import '../data/repositories/expense_repository.dart';
 
-/// ExpenseViewModel managing expenses, balance calculations, and group actions.
+/// ExpenseViewModel managing expenses, balance calculations, group actions, and friendships.
 class ExpenseViewModel extends ChangeNotifier {
   ExpenseRepository repository;
 
   List<ExpenseModel> _expenses = [];
   BalanceSummaryModel _summary = BalanceSummaryModel.empty();
   List<UserModel> _availableUsers = [];
+  List<UserModel> _friends = [];
+  List<FriendRequestModel> _incomingRequests = [];
+  List<FriendRequestModel> _outgoingRequests = [];
   String _selectedCategory = 'all';
 
   bool _isLoading = false;
@@ -26,6 +30,9 @@ class ExpenseViewModel extends ChangeNotifier {
   List<ExpenseModel> get expenses => _expenses;
   BalanceSummaryModel get summary => _summary;
   List<UserModel> get availableUsers => _availableUsers;
+  List<UserModel> get friends => _friends;
+  List<FriendRequestModel> get incomingRequests => _incomingRequests;
+  List<FriendRequestModel> get outgoingRequests => _outgoingRequests;
   String get selectedCategory => _selectedCategory;
   bool get isLoading => _isLoading;
   bool get isSubmitting => _isSubmitting;
@@ -37,16 +44,20 @@ class ExpenseViewModel extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    // Concurrently load expenses, summary, and members
+    // Concurrently load expenses, summary, members, friends, and requests
     final results = await Future.wait([
       repository.getExpenses(category: _selectedCategory),
       repository.getSummary(),
       repository.getUsers(),
+      repository.getFriends(),
+      repository.getFriendRequests(),
     ]);
 
     final expensesResult = results[0];
     final summaryResult = results[1];
     final usersResult = results[2];
+    final friendsResult = results[3];
+    final requestsResult = results[4];
 
     if (expensesResult.isSuccess) {
       _expenses = expensesResult.dataOrNull as List<ExpenseModel>;
@@ -56,6 +67,14 @@ class ExpenseViewModel extends ChangeNotifier {
     }
     if (usersResult.isSuccess) {
       _availableUsers = usersResult.dataOrNull as List<UserModel>;
+    }
+    if (friendsResult.isSuccess) {
+      _friends = (friendsResult.dataOrNull as List<UserModel>?) ?? [];
+    }
+    if (requestsResult.isSuccess) {
+      final reqMap = (requestsResult.dataOrNull as Map<String, List<FriendRequestModel>>?) ?? {};
+      _incomingRequests = reqMap['incoming'] ?? [];
+      _outgoingRequests = reqMap['outgoing'] ?? [];
     }
 
     _isLoading = false;
@@ -194,6 +213,49 @@ class ExpenseViewModel extends ChangeNotifier {
       return true;
     } else {
       _errorMessage = result.errorOrNull?.toString().replaceAll('Exception: ', '') ?? 'บันทึกการเคลียร์หนี้ไม่สำเร็จ';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> sendFriendRequest(String username) async {
+    _isSubmitting = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await repository.sendFriendRequest(username);
+    _isSubmitting = false;
+
+    if (result.isSuccess) {
+      final msg = result.dataOrNull?['message'] as String? ?? 'ส่งคำขอเป็นเพื่อนเรียบร้อยแล้ว';
+      _successMessage = msg;
+      await loadData();
+      return true;
+    } else {
+      _errorMessage = result.errorOrNull?.toString().replaceAll('Exception: ', '') ?? 'ไม่สามารถส่งคำขอเป็นเพื่อนได้';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> respondFriendRequest({required int requestId, required bool accept}) async {
+    _isSubmitting = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await repository.respondFriendRequest(
+      requestId: requestId,
+      action: accept ? 'accept' : 'reject',
+    );
+    _isSubmitting = false;
+
+    if (result.isSuccess) {
+      final msg = result.dataOrNull?['message'] as String? ?? (accept ? 'ยอมรับคำขอเป็นเพื่อนแล้ว' : 'ปฏิเสธคำขอเป็นเพื่อนแล้ว');
+      _successMessage = msg;
+      await loadData();
+      return true;
+    } else {
+      _errorMessage = result.errorOrNull?.toString().replaceAll('Exception: ', '') ?? 'ไม่สามารถดำเนินการได้';
       notifyListeners();
       return false;
     }
