@@ -25,7 +25,7 @@ abstract class ExpenseRepository {
   Future<Result<BalanceSummaryModel>> getSummary();
   Future<Result<List<UserModel>>> getUsers();
   Future<Result<UserModel>> addUser({required String username, String? displayName});
-  Future<Result<void>> settleDebt({required int creditorId, required double amount});
+  Future<Result<void>> settleDebt({int? creditorId, int? debtorId, required double amount});
   Future<Result<List<UserModel>>> getFriends();
   Future<Result<Map<String, List<FriendRequestModel>>>> getFriendRequests();
   Future<Result<Map<String, dynamic>>> sendFriendRequest(String username);
@@ -148,9 +148,9 @@ class ExpenseRepositoryRemote implements ExpenseRepository {
   }
 
   @override
-  Future<Result<void>> settleDebt({required int creditorId, required double amount}) async {
+  Future<Result<void>> settleDebt({int? creditorId, int? debtorId, required double amount}) async {
     try {
-      await apiService.settleDebt(creditorId: creditorId, amount: amount);
+      await apiService.settleDebt(creditorId: creditorId, debtorId: debtorId, amount: amount);
       return const Success(null);
     } on Exception catch (e, st) {
       return Failure(e, st);

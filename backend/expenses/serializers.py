@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.utils import timezone
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Expense, ExpenseSplit, Settlement, ExpenseCategory, FriendRequest
@@ -108,16 +109,29 @@ class ExpenseCreateSerializer(serializers.ModelSerializer):
 class SettlementSerializer(serializers.ModelSerializer):
     debtor = UserBasicSerializer(read_only=True)
     creditor = UserBasicSerializer(read_only=True)
-    creditor_id = serializers.IntegerField(write_only=True)
+    creditor_id = serializers.IntegerField(write_only=True, required=False)
+    debtor_id = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
         model = Settlement
-        fields = ['id', 'debtor', 'creditor', 'creditor_id', 'amount', 'settled_at']
+        fields = ['id', 'debtor', 'creditor', 'creditor_id', 'debtor_id', 'amount', 'settled_at']
 
     def create(self, validated_data):
-        debtor = self.context['request'].user
-        creditor_id = validated_data.pop('creditor_id')
-        creditor = User.objects.get(pk=creditor_id)
+        current_user = self.context['request'].user
+        creditor_id = validated_data.pop('creditor_id', None)
+        debtor_id = validated_data.pop('debtor_id', None)
+
+        if creditor_id and not debtor_id:
+            debtor = current_user
+            creditor = User.objects.get(pk=creditor_id)
+        elif debtor_id and not creditor_id:
+            creditor = current_user
+            debtor = User.objects.get(pk=debtor_id)
+        elif creditor_id and debtor_id:
+            debtor = User.objects.get(pk=debtor_id)
+            creditor = User.objects.get(pk=creditor_id)
+        else:
+            raise serializers.ValidationError("ต้องระบุ creditor_id หรือ debtor_id")
 
         settlement = Settlement.objects.create(
             debtor=debtor,
@@ -130,15 +144,21 @@ class SettlementSerializer(serializers.ModelSerializer):
             user=debtor,
             expense__payer=creditor,
             is_settled=False
-        )
+        ).order_by('id')
         remaining = settlement.amount
         for split in unsettled_splits:
             if remaining <= 0:
                 break
             if split.amount_owed <= remaining:
                 split.is_settled = True
+                split.settled_at = timezone.now()
                 split.save()
                 remaining -= split.amount_owed
+            else:
+                split.is_settled = True
+                split.settled_at = timezone.now()
+                split.save()
+                break
 
         return settlement
 

@@ -91,13 +91,13 @@ class ExpenseApiService {
     return UserModel.fromJson(response.data as Map<String, dynamic>);
   }
 
-  Future<void> settleDebt({required int creditorId, required double amount}) async {
+  Future<void> settleDebt({int? creditorId, int? debtorId, required double amount}) async {
+    final payload = <String, dynamic>{'amount': amount};
+    if (creditorId != null) payload['creditor_id'] = creditorId;
+    if (debtorId != null) payload['debtor_id'] = debtorId;
     await apiClient.post(
       '/api/settle/',
-      data: {
-        'creditor_id': creditorId,
-        'amount': amount,
-      },
+      data: payload,
     );
   }
 

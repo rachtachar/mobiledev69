@@ -169,7 +169,7 @@ class FakeExpenseRepository implements ExpenseRepository {
   }
 
   @override
-  Future<Result<void>> settleDebt({required int creditorId, required double amount}) async {
+  Future<Result<void>> settleDebt({int? creditorId, int? debtorId, required double amount}) async {
     return const Success(null);
   }
 

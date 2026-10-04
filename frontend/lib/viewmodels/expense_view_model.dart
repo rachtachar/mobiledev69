@@ -199,12 +199,12 @@ class ExpenseViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> settleDebt({required int creditorId, required double amount}) async {
+  Future<bool> settleDebt({int? creditorId, int? debtorId, required double amount}) async {
     _isSubmitting = true;
     _errorMessage = null;
     notifyListeners();
 
-    final result = await repository.settleDebt(creditorId: creditorId, amount: amount);
+    final result = await repository.settleDebt(creditorId: creditorId, debtorId: debtorId, amount: amount);
     _isSubmitting = false;
 
     if (result.isSuccess) {

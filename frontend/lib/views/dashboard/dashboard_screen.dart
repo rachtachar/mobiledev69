@@ -340,31 +340,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Expanded(
               child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.arrow_downward, size: 16, color: AppTheme.accentGreen),
-                          const SizedBox(width: 4),
-                          const Text(
-                            'เพื่อนติดคุณ',
-                            style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${summary.totalOwedToYou.toStringAsFixed(2)} ฿',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.accentGreen,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.arrow_downward, size: 16, color: AppTheme.accentGreen),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  'เพื่อนติดคุณ',
+                                  style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                                ),
+                              ],
+                            ),
+                            const Icon(Icons.chevron_right, size: 16, color: AppTheme.textMuted),
+                          ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 6),
+                        Text(
+                          '${summary.totalOwedToYou.toStringAsFixed(2)} ฿',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.accentGreen,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -372,31 +386,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.arrow_upward, size: 16, color: AppTheme.accentRed),
-                          const SizedBox(width: 4),
-                          const Text(
-                            'คุณติดเพื่อน',
-                            style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${summary.totalYouOwe.toStringAsFixed(2)} ฿',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.accentRed,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.arrow_upward, size: 16, color: AppTheme.accentRed),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  'คุณติดเพื่อน',
+                                  style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                                ),
+                              ],
+                            ),
+                            const Icon(Icons.chevron_right, size: 16, color: AppTheme.textMuted),
+                          ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 6),
+                        Text(
+                          '${summary.totalYouOwe.toStringAsFixed(2)} ฿',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.accentRed,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

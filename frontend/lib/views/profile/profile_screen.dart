@@ -202,10 +202,36 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     trailing: theyOweYou
-                        ? null
-                        : TextButton(
-                            onPressed: () => _confirmSettle(context, person.user.id, person.user.displayName, person.netAmount.abs()),
-                            child: const Text('บันทึกคืนเงิน'),
+                        ? ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.accentGreen,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              elevation: 0,
+                            ),
+                            icon: const Icon(Icons.check, size: 14),
+                            label: const Text('ได้รับเงินแล้ว', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                            onPressed: () => _confirmSettleReceive(
+                              context,
+                              person.user.id,
+                              person.user.displayName,
+                              person.netAmount.abs(),
+                            ),
+                          )
+                        : OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTheme.accentRed,
+                              side: const BorderSide(color: AppTheme.accentRed),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            ),
+                            icon: const Icon(Icons.payment, size: 14),
+                            label: const Text('โอนคืนแล้ว', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                            onPressed: () => _confirmSettlePay(
+                              context,
+                              person.user.id,
+                              person.user.displayName,
+                              person.netAmount.abs(),
+                            ),
                           ),
                   ),
                 );
@@ -234,12 +260,12 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _confirmSettle(BuildContext context, int creditorId, String name, double amount) {
+  void _confirmSettlePay(BuildContext context, int creditorId, String name, double amount) {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: const Text('บันทึกการคืนเงิน (Settle Debt)'),
-        content: Text('คุณต้องการบันทึกว่าได้คืนเงิน $amount บาท ให้กับ "$name" เรียบร้อยแล้วใช่หรือไม่?'),
+        title: const Text('บันทึกการโอนเงินคืน (Settle Debt)'),
+        content: Text('คุณต้องการบันทึกว่าได้โอนเงินคืน ฿${amount.toStringAsFixed(2)} ให้กับ "$name" เรียบร้อยแล้วใช่หรือไม่? ระบบจะตัดยอดหนี้ให้ทันที'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
@@ -251,7 +277,32 @@ class ProfileScreen extends StatelessWidget {
               final vm = context.read<ExpenseViewModel>();
               await vm.settleDebt(creditorId: creditorId, amount: amount);
             },
-            child: const Text('ยืนยันการคืนเงิน'),
+            child: const Text('ยืนยันโอนเงินคืน'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmSettleReceive(BuildContext context, int debtorId, String name, double amount) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('บันทึกได้รับเงินคืนแล้ว (Mark as Received)'),
+        content: Text('คุณได้รับเงินคืนจำนวน ฿${amount.toStringAsFixed(2)} จาก "$name" เรียบร้อยแล้วใช่หรือไม่? ระบบจะตัดยอดหนี้ให้ทันที'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('ยกเลิก'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentGreen),
+            onPressed: () async {
+              Navigator.of(dialogCtx).pop();
+              final vm = context.read<ExpenseViewModel>();
+              await vm.settleDebt(debtorId: debtorId, amount: amount);
+            },
+            child: const Text('ยืนยันได้รับเงินแล้ว'),
           ),
         ],
       ),
