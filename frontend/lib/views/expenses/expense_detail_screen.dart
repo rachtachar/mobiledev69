@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants.dart';
 import '../../data/models/expense_model.dart';
+import '../../viewmodels/auth_view_model.dart';
 import '../../viewmodels/expense_view_model.dart';
 import '../theme/app_theme.dart';
 import 'add_expense_screen.dart';
@@ -14,6 +15,11 @@ class ExpenseDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authVm = context.watch<AuthViewModel>();
+    final currentUser = authVm.currentUser;
+    final isMine = currentUser != null &&
+        (expense.payer.id == currentUser.id || expense.payer.username == currentUser.username);
+
     final catInfo = AppConstants.categories[expense.category] ??
         AppConstants.categories['other']!;
     String formattedDate;
@@ -27,25 +33,27 @@ class ExpenseDetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('รายละเอียดบิล'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryColor),
-            tooltip: 'แก้ไขบิล',
-            onPressed: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => AddExpenseScreen(expenseToEdit: expense),
-                ),
-              );
-              if (context.mounted) {
-                Navigator.of(context).pop();
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppTheme.accentRed),
-            tooltip: 'ลบบิลนี้',
-            onPressed: () => _confirmDelete(context),
-          ),
+          if (isMine) ...[
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryColor),
+              tooltip: 'แก้ไขบิล',
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => AddExpenseScreen(expenseToEdit: expense),
+                  ),
+                );
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: AppTheme.accentRed),
+              tooltip: 'ลบบิลนี้',
+              onPressed: () => _confirmDelete(context),
+            ),
+          ],
         ],
       ),
       body: SingleChildScrollView(
@@ -53,6 +61,44 @@ class ExpenseDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Ownership Banner (สร้างเอง vs คนอื่นสร้าง)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: isMine
+                    ? AppTheme.accentGreen.withValues(alpha: 0.12)
+                    : Colors.orange.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isMine
+                      ? AppTheme.accentGreen.withValues(alpha: 0.3)
+                      : Colors.orange.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isMine ? Icons.verified : Icons.group,
+                    color: isMine ? AppTheme.accentGreen : Colors.orange.shade800,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      isMine
+                          ? '🙋‍♂️ คุณเป็นคนสร้างและจ่ายบิลนี้ (มีสิทธิ์แก้ไขและลบ)'
+                          : '👥 บิลนี้สร้างโดย ${expense.payer.displayName} (คุณร่วมหาร)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: isMine ? AppTheme.accentGreen : Colors.orange.shade800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             // Header Card
             Card(
               child: Padding(
