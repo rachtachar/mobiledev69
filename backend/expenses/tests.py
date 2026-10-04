@@ -65,3 +65,25 @@ class FriendRequestTests(TestCase):
         response = self.client.post('/api/friends/requests/', {'username': 'user1'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(FriendRequest.objects.filter(from_user=self.user1, to_user=self.user2, status='accepted').exists())
+
+    def test_new_user_sees_no_bills_until_involved(self):
+        from expenses.models import Expense, ExpenseSplit
+        # user1 creates a bill with user2
+        exp = Expense.objects.create(title='Secret Bill', amount=500, payer=self.user1)
+        ExpenseSplit.objects.create(expense=exp, user=self.user1, amount_owed=250, is_settled=True)
+        ExpenseSplit.objects.create(expense=exp, user=self.user2, amount_owed=250, is_settled=False)
+
+        # user1 and user2 can see it
+        self.client.force_authenticate(user=self.user1)
+        resp1 = self.client.get('/api/expenses/')
+        self.assertEqual(len(resp1.data), 1)
+
+        self.client.force_authenticate(user=self.user2)
+        resp2 = self.client.get('/api/expenses/')
+        self.assertEqual(len(resp2.data), 1)
+
+        # user3 (uninvolved/new user) CANNOT see it
+        self.client.force_authenticate(user=self.user3)
+        resp3 = self.client.get('/api/expenses/')
+        self.assertEqual(len(resp3.data), 0)
+

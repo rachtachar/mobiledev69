@@ -62,11 +62,9 @@ class ExpenseCreateSerializer(serializers.ModelSerializer):
 
         expense = Expense.objects.create(**validated_data)
 
-        # Participants: if empty or only payer, default to all active users or payer
+        # Participants: if empty, default to payer
         if not participant_ids:
-            # Default to all active users including payer
-            all_users = list(User.objects.filter(is_active=True))
-            participant_ids = [u.id for u in all_users]
+            participant_ids = [payer.id]
 
         users = list(User.objects.filter(id__in=participant_ids))
         if users:

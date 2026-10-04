@@ -29,20 +29,25 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     """
     CRUD API for group expenses.
     Protected endpoint: requires valid OIDC Bearer token or session.
+    Only returns expenses where the authenticated user is the payer or a split participant.
     """
-    queryset = Expense.objects.all().select_related('payer').prefetch_related('splits__user')
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Expense.objects.filter(
+            Q(payer=user) | Q(splits__user=user)
+        ).distinct().select_related('payer').prefetch_related('splits__user')
+
+        category = self.request.query_params.get('category')
+        if category and category != 'all':
+            queryset = queryset.filter(category=category)
+        return queryset
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return ExpenseCreateSerializer
         return ExpenseSerializer
-
-    def filter_queryset(self, queryset):
-        category = self.request.query_params.get('category')
-        if category and category != 'all':
-            queryset = queryset.filter(category=category)
-        return queryset
 
 
 class UserListView(APIView):
