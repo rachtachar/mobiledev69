@@ -24,6 +24,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _creatorFilter = 'all'; // 'all', 'mine', 'others'
   String _statusFilter = 'all'; // 'all', 'unsettled', 'settled'
 
+  bool _isAllMembersSettled(ExpenseModel expense) {
+    return expense.splits.isNotEmpty && expense.splits.every((s) => s.isSettled);
+  }
+
   bool _isExpenseSettled(ExpenseModel expense, UserModel? user) {
     if (user == null) return false;
     final isMine = expense.payer.id == user.id || expense.payer.username == user.username;
@@ -54,6 +58,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final myExpensesCount = expenseVm.expenses.where((e) => user != null && (e.payer.id == user.id || e.payer.username == user.username)).length;
     final othersExpensesCount = expenseVm.expenses.where((e) => user == null || (e.payer.id != user.id && e.payer.username != user.username)).length;
+    final allSettledCount = expenseVm.expenses.where((e) => _isAllMembersSettled(e)).length;
     final unsettledCount = expenseVm.expenses.where((e) => !_isExpenseSettled(e, user)).length;
     final settledCount = expenseVm.expenses.where((e) => _isExpenseSettled(e, user)).length;
 
@@ -63,6 +68,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (_creatorFilter == 'others' && isMine) return false;
 
       final isSettled = _isExpenseSettled(e, user);
+      if (_statusFilter == 'all_settled' && !_isAllMembersSettled(e)) return false;
       if (_statusFilter == 'unsettled' && isSettled) return false;
       if (_statusFilter == 'settled' && !isSettled) return false;
 
@@ -214,7 +220,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 8),
 
-              // Payment Status Filter Tabs (จ่ายแล้ว vs ยังไม่จ่าย)
+              // Payment Status Filter Tabs (ทุกคนจ่ายครบ vs ยังไม่จ่าย vs คุณจ่ายแล้ว)
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -227,6 +233,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(width: 8),
                     _buildCreatorTab(
+                      label: 'ทุกคนจ่ายครบ 🎉',
+                      count: allSettledCount,
+                      isSelected: _statusFilter == 'all_settled',
+                      onTap: () => setState(() => _statusFilter = 'all_settled'),
+                      activeColor: Colors.teal.shade700,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildCreatorTab(
                       label: 'ยังไม่จ่าย ❌',
                       count: unsettledCount,
                       isSelected: _statusFilter == 'unsettled',
@@ -235,7 +249,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(width: 8),
                     _buildCreatorTab(
-                      label: 'จ่ายแล้ว ✔️',
+                      label: 'คุณจ่ายแล้ว ✔️',
                       count: settledCount,
                       isSelected: _statusFilter == 'settled',
                       onTap: () => setState(() => _statusFilter = 'settled'),
@@ -540,6 +554,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ? friendSplits.any((s) => s.pendingVerification)
         : (mySplit?.pendingVerification ?? false);
 
+    final bool isAllMembersSettled = expense.splits.isNotEmpty && expense.splits.every((s) => s.isSettled);
+
     final bool isSettled = isMine
         ? (friendSplits.isEmpty || unsettledSplits.isEmpty)
         : (mySplit?.isSettled ?? false);
@@ -552,23 +568,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // Status Badge & Border Colors
-    final Color cardBorderColor = isSettled
-        ? AppTheme.accentGreen.withValues(alpha: 0.4)
-        : (hasPendingVerification ? Colors.orange.shade400 : AppTheme.accentRed.withValues(alpha: 0.5));
+    final Color cardBorderColor = isAllMembersSettled
+        ? Colors.teal.shade400
+        : (isSettled
+            ? AppTheme.accentGreen.withValues(alpha: 0.5)
+            : (hasPendingVerification ? Colors.orange.shade400 : AppTheme.accentRed.withValues(alpha: 0.5)));
 
-    final Color statusColor = isSettled
-        ? AppTheme.accentGreen
-        : (hasPendingVerification ? Colors.deepOrange : AppTheme.accentRed);
+    final Color statusColor = isAllMembersSettled
+        ? Colors.teal.shade700
+        : (isSettled
+            ? AppTheme.accentGreen
+            : (hasPendingVerification ? Colors.deepOrange : AppTheme.accentRed));
 
-    final String statusLabel = isSettled
-        ? (isMine ? 'รับเงินครบแล้ว ✔️' : 'คุณจ่ายแล้ว ✔️')
-        : (hasPendingVerification
-            ? (isMine ? 'รอตรวจเงิน ⏳' : 'รอเจ้าของตรวจ ⏳')
-            : (isMine ? 'รอเพื่อนจ่าย ❌' : 'ยังไม่จ่าย ❌'));
+    final String statusLabel = isAllMembersSettled
+        ? 'ทุกคนจ่ายครบแล้ว 🎉'
+        : (isSettled
+            ? (isMine ? 'รับเงินครบแล้ว ✔️' : 'คุณจ่ายแล้ว ✔️')
+            : (hasPendingVerification
+                ? (isMine ? 'รอตรวจเงิน ⏳' : 'รอเจ้าของตรวจ ⏳')
+                : (isMine ? 'รอเพื่อนจ่าย ❌' : 'ยังไม่จ่าย ❌')));
 
-    final IconData statusIcon = isSettled
-        ? Icons.check_circle
-        : (hasPendingVerification ? Icons.hourglass_top : Icons.cancel);
+    final IconData statusIcon = isAllMembersSettled
+        ? Icons.verified
+        : (isSettled
+            ? Icons.check_circle
+            : (hasPendingVerification ? Icons.hourglass_top : Icons.cancel));
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

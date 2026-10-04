@@ -106,6 +106,51 @@ class ExpenseDetailScreen extends StatelessWidget {
               ),
             ),
 
+            // All Members Settled Banner
+            if (currentExpense.splits.isNotEmpty && currentExpense.splits.every((s) => s.isSettled))
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.teal.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.teal.shade700, width: 1.5),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.teal.shade700,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.check, color: Colors.white, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '🎉 บิลนี้สมาชิกทุกคนชำระเงินครบหมดแล้ว!',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                              color: Colors.teal.shade900,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'ยอดเงินถูกเคลียร์เรียบร้อย 100% ปิดยอดสมบูรณ์ ไม่มีใครติดค้างในบิลนี้แล้ว',
+                            style: TextStyle(fontSize: 11, color: AppTheme.textDark),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // Pending Verification Alert Banner for Owner
             if (isMine && currentExpense.splits.any((s) => s.pendingVerification))
               Container(
