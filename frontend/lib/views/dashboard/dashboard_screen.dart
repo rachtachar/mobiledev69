@@ -283,153 +283,143 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildSummaryHeader(BalanceSummaryModel summary) {
-    final isPositive = summary.netBalance >= 0;
-
-    return Column(
+    return Row(
       children: [
-        // Net Balance Card
-        Card(
-          child: Container(
-            decoration: BoxDecoration(
+        // เพื่อนติดคุณ
+        Expanded(
+          child: Card(
+            elevation: 1.5,
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                colors: isPositive
-                    ? [const Color(0xFF0D9488), const Color(0xFF059669)]
-                    : [const Color(0xFFE11D48), const Color(0xFFBE123C)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              side: BorderSide(color: AppTheme.accentGreen.withValues(alpha: 0.3)),
             ),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'ยอดคงเหลือสุทธิของคุณ (Net Balance)',
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: AppTheme.accentGreen.withValues(alpha: 0.05),
                 ),
-                const SizedBox(height: 8),
-                Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppTheme.accentGreen.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.arrow_downward, size: 16, color: AppTheme.accentGreen),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'เพื่อนติดคุณ',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+                            ),
+                          ],
+                        ),
+                        const Icon(Icons.chevron_right, size: 18, color: AppTheme.textMuted),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
                     Text(
-                      '${isPositive ? '+' : ''}${summary.netBalance.toStringAsFixed(2)} ฿',
+                      '${summary.totalOwedToYou.toStringAsFixed(2)} ฿',
                       style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
+                        fontSize: 22,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
+                        color: AppTheme.accentGreen,
                       ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'แตะเพื่อดูรายละเอียดหรือเคลียร์เงิน',
+                      style: TextStyle(fontSize: 10, color: AppTheme.textMuted),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  isPositive
-                      ? 'คุณมีสิทธิ์ได้รับเงินคืนจากเพื่อนในกลุ่ม'
-                      : 'คุณมียอดค้างจ่ายที่ต้องโอนคืนให้เพื่อน',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                ),
-              ],
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(width: 12),
 
-        // 2 Column Mini-Cards
-        Row(
-          children: [
-            Expanded(
-              child: Card(
-                child: InkWell(
+        // คุณติดเพื่อน
+        Expanded(
+          child: Card(
+            elevation: 1.5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppTheme.accentRed.withValues(alpha: 0.3)),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                    );
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  color: AppTheme.accentRed.withValues(alpha: 0.05),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Icon(Icons.arrow_downward, size: 16, color: AppTheme.accentGreen),
-                                const SizedBox(width: 4),
-                                const Text(
-                                  'เพื่อนติดคุณ',
-                                  style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                                ),
-                              ],
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppTheme.accentRed.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.arrow_upward, size: 16, color: AppTheme.accentRed),
                             ),
-                            const Icon(Icons.chevron_right, size: 16, color: AppTheme.textMuted),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'คุณติดเพื่อน',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${summary.totalOwedToYou.toStringAsFixed(2)} ฿',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.accentGreen,
-                          ),
-                        ),
+                        const Icon(Icons.chevron_right, size: 18, color: AppTheme.textMuted),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '${summary.totalYouOwe.toStringAsFixed(2)} ฿',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.accentRed,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'แตะเพื่อดูรายละเอียดหรือโอนคืน',
+                      style: TextStyle(fontSize: 10, color: AppTheme.textMuted),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Card(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(16),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                    );
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.arrow_upward, size: 16, color: AppTheme.accentRed),
-                                const SizedBox(width: 4),
-                                const Text(
-                                  'คุณติดเพื่อน',
-                                  style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                                ),
-                              ],
-                            ),
-                            const Icon(Icons.chevron_right, size: 16, color: AppTheme.textMuted),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${summary.totalYouOwe.toStringAsFixed(2)} ฿',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.accentRed,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ],
     );
